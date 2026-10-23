@@ -34,14 +34,23 @@ export function scenarios(table: QuotedTable, stopYear: number): Scenarios {
   };
 }
 
-export function breakevenYear(table: QuotedTable): number | null {
-  for (let year = 1; year <= table.coverageYears; year++) {
+export type YearPosition = { year: number; premiumsPaid: Baht; moneyOut: Baht };
+
+/** Per policy year: premiums paid so far vs. everything the holder has or gets by leaving at the end of that year. */
+export function yearlyPositions(table: QuotedTable): YearPosition[] {
+  return table.rows.map(({ year, cashValue }) => {
     // At maturity the policyholder receives the maturity benefit; the final-year cash value is not payable.
-    const exitValue =
-      year === table.coverageYears ? table.maturityBenefit : rowAt(table, year).cashValue;
-    if (cashBackThrough(table, year) + exitValue >= premiumsPaidThrough(table, year)) return year;
-  }
-  return null;
+    const exitValue = year === table.coverageYears ? table.maturityBenefit : cashValue;
+    return {
+      year,
+      premiumsPaid: baht(premiumsPaidThrough(table, year)),
+      moneyOut: baht(cashBackThrough(table, year) + exitValue),
+    };
+  });
+}
+
+export function breakevenYear(table: QuotedTable): number | null {
+  return yearlyPositions(table).find((p) => p.moneyOut >= p.premiumsPaid)?.year ?? null;
 }
 
 export function lossZone(table: QuotedTable): number[] {

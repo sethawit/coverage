@@ -16,6 +16,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={font.className}>
         <header className="site-header">
           <a href="/" className="brand">Coverage</a>
+          <nav className="site-nav">
+            <a href="/">ค้นหาประกัน</a>
+            <a href="/tax">วางแผนภาษี</a>
+          </nav>
         </header>
         <main className="container">{children}</main>
       </body>

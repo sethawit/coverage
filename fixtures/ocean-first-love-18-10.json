@@ -1,0 +1,153 @@
+{
+  "id": "ocean-first-love-18-10",
+  "insurerId": "ocean-life",
+  "nameTh": "โอเชี่ยนไลฟ์ เฟิร์ส เลิฟ 18/10",
+  "kind": "endowment",
+  "paymentYears": 10,
+  "coverageYears": 18,
+  "source": {
+    "url": "https://www.ocean.co.th/en/our-products/savings/first-love1810",
+    "documentTitle": "โอเชี่ยนไลฟ์ เฟิร์ส เลิฟ 18/10 (Ocean Life, policy form โอชิ แพลน 18/10), product page benefit table: female 35, premium 6,000 a year buys sum assured 47,096; death 150% of sum assured in every year (plus 300% more for accidental death, not modelled), 150% at maturity; factsheet code 20682; surrender values not published",
+    "retrievedOn": "2026-10-23"
+  },
+  "status": {
+    "kind": "draft"
+  },
+  "illustrations": [
+    {
+      "age": 35,
+      "gender": "F",
+      "basis": "brochureSample",
+      "annualPremium": 127.4,
+      "maturityBenefit": 1500,
+      "rows": [
+        {
+          "year": 1,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 2,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 3,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 4,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 5,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 6,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 7,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 8,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 9,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 10,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 11,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 12,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 13,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 14,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 15,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 16,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 17,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 18,
+          "deathBenefit": 1500,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        }
+      ]
+    }
+  ]
+}

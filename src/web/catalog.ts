@@ -7,6 +7,8 @@ const productsDir = join(process.cwd(), 'fixtures');
 export const INSURERS: Record<string, string> = {
   'bangkok-life': 'กรุงเทพประกันชีวิต',
   'krungthai-axa': 'กรุงไทย-แอกซ่า ประกันชีวิต',
+  'chubb-life': 'ชับบ์ ไลฟ์ ประกันชีวิต',
+  'ocean-life': 'ไทยสมุทรประกันชีวิต',
 };
 
 export function allProducts(): Product[] {

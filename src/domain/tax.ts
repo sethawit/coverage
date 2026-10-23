@@ -217,3 +217,49 @@ export function planEffect(i: TaxInput, plan: readonly PlanItem[]) {
   });
   return { before, after: prev, rows };
 }
+
+export type BracketTarget = {
+  /** Top rate once net income is at or under `ceiling`. */
+  rate: number;
+  ceiling: number;
+  /** Extra deductions needed to bring net income down to `ceiling`. */
+  needed: number;
+  /** One way to get there: each item in `order` filled up to its remaining room before the next. */
+  fill: PlanItem[];
+  taxSaved: number;
+  reachable: boolean;
+  /** Net income after `fill`, which stays above `ceiling` when the remaining room runs out. */
+  netIncomeAfter: number;
+};
+
+/** For every bracket below the current one, what it takes to drop into it by filling items in the given order. */
+export function bracketTargets(i: TaxInput, order: readonly string[]): BracketTarget[] {
+  const now = computeTax(i);
+  return RATE_TABLE.filter((b) => b.upTo < now.netIncome)
+    .reverse()
+    .map((b) => {
+      let input = i;
+      const fill = new Map<string, number>();
+      // A second pass covers the small drift when lower income also shrinks the donation allowance.
+      for (let pass = 0; pass < 2; pass++) {
+        for (const id of order) {
+          const over = computeTax(input).netIncome - b.upTo;
+          if (over <= 0) break;
+          const take = Math.min(headroom(input, id).more, Math.ceil(over));
+          if (take <= 0) continue;
+          input = withExtra(input, id, take);
+          fill.set(id, (fill.get(id) ?? 0) + take);
+        }
+      }
+      const after = computeTax(input);
+      return {
+        rate: b.rate,
+        ceiling: b.upTo,
+        needed: now.netIncome - b.upTo,
+        fill: [...fill].map(([deduction, amount]) => ({ deduction, amount })),
+        taxSaved: now.tax - after.tax,
+        reachable: after.netIncome <= b.upTo,
+        netIncomeAfter: after.netIncome,
+      };
+    });
+}

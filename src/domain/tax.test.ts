@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeTax, headroom, incomeTax, planEffect, type TaxInput } from './tax.ts';
+import { bracketTargets, computeTax, headroom, incomeTax, planEffect, type TaxInput } from './tax.ts';
 
 describe('incomeTax', () => {
   it('matches the cumulative column of the Revenue Department table', () => {
@@ -85,5 +85,39 @@ describe('planEffect', () => {
   it('leaves the result unchanged for an empty plan', () => {
     const { before, after } = planEffect(person(), []);
     expect(after).toEqual(before);
+  });
+});
+
+describe('bracketTargets', () => {
+  // 1,000,000 salary leaves 840,000 net income in the 20% bracket.
+  const targets = bracketTargets(person(), ['life', 'health', 'rmf']);
+
+  it('lists the lower brackets nearest first', () => {
+    expect(targets.map((t) => t.rate)).toEqual([0.15, 0.1, 0.05, 0]);
+  });
+
+  it('fills the first item when it alone reaches the bracket', () => {
+    expect(targets[0]).toMatchObject({
+      ceiling: 750_000,
+      needed: 90_000,
+      fill: [{ deduction: 'life', amount: 90_000 }],
+      taxSaved: incomeTax(840_000) - incomeTax(750_000),
+      reachable: true,
+    });
+  });
+
+  it('skips items whose shared cap is already full and moves on', () => {
+    expect(targets[1]).toMatchObject({
+      needed: 340_000,
+      fill: [
+        { deduction: 'life', amount: 100_000 },
+        { deduction: 'rmf', amount: 240_000 },
+      ],
+      reachable: true,
+    });
+  });
+
+  it('reports how far the remaining room gets when it is not enough', () => {
+    expect(targets[2]).toMatchObject({ reachable: false, netIncomeAfter: 440_000 });
   });
 });

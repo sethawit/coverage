@@ -20,6 +20,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { baht, type Product } from '../../src/domain/product.ts';
 import { TAX_BRACKETS } from '../../src/domain/returns.ts';
 import {
+  bracketTargets,
   computeTax,
   DEDUCTIONS,
   headroom,
@@ -359,6 +360,14 @@ function SummaryStep({ input, result, products, insurers, params, go, plan, setP
         </section>
       )}
 
+      <BracketSection
+        input={input}
+        eligible={eligible.slice(0, 3)}
+        shopper={shopper}
+        insurers={insurers}
+        setPlan={setPlan}
+      />
+
       <PlanSection input={input} products={products} insurers={insurers} plan={plan} setPlan={setPlan} lifeRoom={lifeRoom} />
 
       <section className="step-panel">
@@ -440,6 +449,9 @@ function SummaryStep({ input, result, products, insurers, params, go, plan, setP
 type PlanRow = { ref: string; amount: number };
 const productRef = (id: string) => `p.${id}`;
 const PLAN_TYPES = DEDUCTIONS.filter((d) => d.plannable);
+// Things a person can buy on their own this year; PVD and parents' health depend on an employer or on family.
+const FILL_ORDER = ['life', 'health', 'pension', 'rmf', 'esg', 'nsf'];
+const deductionLabel = (id: string) => DEDUCTIONS.find((d) => d.id === id)?.label ?? id;
 
 function parsePlan(raw: string | null): PlanRow[] {
   return (raw ?? '')
@@ -456,6 +468,89 @@ function planDeduction(ref: string, products: readonly Product[]): string | null
   if (!ref.startsWith('p.')) return PLAN_TYPES.some((d) => d.id === ref) ? ref : null;
   const product = products.find((p) => productRef(p.id) === ref);
   return product && product.coverageYears >= 10 ? 'life' : null;
+}
+
+type BracketProps = {
+  input: TaxInput;
+  eligible: ReturnType<typeof discover>;
+  shopper: Parameters<typeof productHref>[1];
+  insurers: Record<string, string>;
+  setPlan: (next: readonly PlanRow[]) => void;
+};
+
+function BracketSection({ input, eligible, shopper, insurers, setPlan }: BracketProps) {
+  const targets = bracketTargets(input, FILL_ORDER);
+  if (targets.length === 0) return null;
+  const percent = (r: number) => `${Math.round(r * 100)}%`;
+  return (
+    <section className="step-panel">
+      <h2>อยากลงไปขั้นภาษีไหน</h2>
+      <p className="muted">
+        ถ้าเงินได้สุทธิลดลงจนต่ำกว่าเส้นของขั้นนั้น ส่วนที่เกินจะไม่ถูกคิดภาษีอัตราเดิมอีก ตัวอย่างนี้ใส่ประกันก่อน
+        แล้วต่อด้วยกองทุน แต่ละรายการใส่จนเต็มสิทธิ์ก่อนไปรายการถัดไป เป็นแค่วิธีหนึ่ง ไม่ใช่คำแนะนำว่าเหมาะกับคุณ
+      </p>
+      <ol className="brackets">
+        {targets.map((t) => {
+          const paid = t.fill.reduce((sum, f) => sum + f.amount, 0);
+          return (
+            <li key={t.rate} className={t.reachable ? undefined : 'unreachable'}>
+              <div className="bracket-head">
+                <span className="bracket-rate">ขั้น {percent(t.rate)}</span>
+                <span className="muted small">เงินได้สุทธิไม่เกิน {formatBaht(t.ceiling)}</span>
+                <span className="gain">ภาษีลด {formatBaht(t.taxSaved)}</span>
+              </div>
+              <p className="small">
+                ต้องลดหย่อนเพิ่ม {formatBaht(t.needed)}
+                {!t.reachable && ` สิทธิ์ที่เหลือลดได้ถึงแค่ ${formatBaht(t.netIncomeAfter)} ยังไม่ถึงขั้นนี้`}
+              </p>
+              {t.fill.length > 0 && (
+                <>
+                  <ul className="fill">
+                    {t.fill.map((f) => (
+                      <li key={f.deduction}>
+                        <span>{deductionLabel(f.deduction)}</span>
+                        <strong>{formatBaht(f.amount)}</strong>
+                        {f.deduction === 'life' && eligible.length > 0 && (
+                          <span className="muted small fill-products">
+                            แบบที่ใช้สิทธิ์นี้ได้ เช่น{' '}
+                            {eligible.map((x, i) => (
+                              <span key={x.product.id}>
+                                {i > 0 && ', '}
+                                <Link href={productHref(x, shopper)}>
+                                  {insurers[x.product.insurerId] ?? x.product.insurerId} {x.product.nameTh}
+                                </Link>
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="bracket-foot">
+                    <span className="muted small">จ่ายเพิ่มรวมปีละ {formatBaht(paid)}</span>
+                    <button
+                      type="button"
+                      className="compare-toggle"
+                      onClick={() => {
+                        setPlan(t.fill.map((f) => ({ ref: f.deduction, amount: f.amount })));
+                        document.getElementById('plan')?.scrollIntoView({ block: 'start' });
+                      }}
+                    >
+                      <Plus size={14} weight="bold" aria-hidden />
+                      ใช้เป็นแผน
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="muted small">
+        เงินที่จ่ายเข้าประกันและกองทุนไม่ได้หายไป แต่ถูกล็อกไว้ตามเงื่อนไขของแต่ละแบบ เช่น RMF ขายได้เมื่ออายุ 55 ปี
+      </p>
+    </section>
+  );
 }
 
 type PlanProps = {

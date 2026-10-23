@@ -9,16 +9,16 @@ export const formatPercent = (rate: number | null) =>
 
 export const genderLabel = { M: 'ชาย', F: 'หญิง' } as const;
 
-export const UNPUBLISHED = 'ไม่เปิดเผยในเอกสารสาธารณะ ขอจากบริษัท';
+export const UNPUBLISHED = 'บริษัทไม่บอกในหน้าเว็บ ขอจากตัวแทน';
 
 /** When leaving stops losing money, as a short phrase for lists and tables. */
 export function breakevenLabel(b: Breakeven, coverageYears: number): string {
   switch (b.kind) {
     case 'never':
-      return 'ไม่คืนทุน';
+      return 'ขาดทุนทุกปี';
     case 'year':
-      return b.year === coverageYears ? `เมื่อครบสัญญาปีที่ ${b.year}` : `ตั้งแต่ปีที่ ${b.year}`;
+      return b.year === coverageYears ? `ต้องถือครบ ${b.year} ปี` : `ตั้งแต่ปีที่ ${b.year}`;
     case 'unknown':
-      return b.byYear === null ? 'ไม่ทราบ' : `อย่างช้าปีที่ ${b.byYear}`;
+      return b.byYear === null ? 'ไม่ทราบ' : `ไม่ทราบ อย่างช้าปีที่ ${b.byYear}`;
   }
 }

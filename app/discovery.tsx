@@ -23,10 +23,10 @@ import { productHref } from './shopper-link.ts';
 // The list always shows these four figures; a sort on anything else adds that figure so the order is explainable.
 const EXTRA_METRIC: Partial<Record<SortKey, { label: string; value: (x: Summary) => string }>> = {
   afterTax: {
-    label: 'รวมภาษีที่ประหยัดได้',
+    label: 'รวมภาษีที่ได้คืน',
     value: (x) => (x.returns.afterTax.kind === 'eligible' ? formatPercent(x.returns.afterTax.irr) : 'ไม่เข้าเงื่อนไข'),
   },
-  death: { label: 'คุ้มครองชีวิตสูงสุด', value: (x) => formatBaht(x.peakDeath) },
+  death: { label: 'ครอบครัวได้สูงสุดถ้าเสียชีวิต', value: (x) => formatBaht(x.peakDeath) },
 };
 
 const PAY_LIMITS = [null, 5, 7, 10] as const;
@@ -80,7 +80,7 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
             />
           </label>
           <label>
-            ฐานภาษีของคุณ
+            คุณเสียภาษีขั้นไหน
             <select
               value={Math.round(shopper.bracket * 100)}
               onChange={(e) =>
@@ -103,7 +103,7 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
           onPick={(maxPayYears) => update({ maxPayYears })}
         />
         <Chips
-          label="ต้องได้เงินคืนครบภายใน"
+          label="ต้องได้เงินก้อนสุดท้ายภายใน"
           options={HORIZONS}
           value={shopper.horizon}
           text={(n) => (n === null ? 'ไม่จำกัด' : `${n} ปี`)}
@@ -142,24 +142,31 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                   {x.product.nameTh}
                 </Link>
                 <span className="muted small">
-                  จ่ายเบี้ย {x.product.paymentYears} ปี คุ้มครอง {x.product.coverageYears} ปี · ทุนประกัน{' '}
+                  จ่าย {x.product.paymentYears} ปี ได้คืนครบใน {x.product.coverageYears} ปี · ทุนประกัน{' '}
                   {formatBaht(x.sumAssured)}
+                </span>
+                <span>
+                  จ่ายปีละ {formatBaht(x.annualPremium)} รวม {formatBaht(x.totalPremiums)} ได้คืนแน่นอนรวม{' '}
+                  {formatBaht(x.guaranteedTotal)}{' '}
+                  {x.guaranteedTotal >= x.totalPremiums
+                    ? `(มากกว่าที่จ่าย ${formatBaht(x.guaranteedTotal - x.totalPremiums)})`
+                    : `(น้อยกว่าที่จ่าย ${formatBaht(x.totalPremiums - x.guaranteedTotal)})`}
                 </span>
                 <dl className="metrics">
                   <div>
-                    <dt>ได้คืนรวม (รับประกัน)</dt>
+                    <dt>ได้คืนรวมแน่นอน</dt>
                     <dd>{formatBaht(x.guaranteedTotal)}</dd>
                   </div>
                   <div>
-                    <dt>จากเบี้ยรวม</dt>
+                    <dt>จ่ายรวม</dt>
                     <dd>{formatBaht(x.totalPremiums)}</dd>
                   </div>
                   <div>
-                    <dt>ผลตอบแทนรับประกัน</dt>
+                    <dt>เท่ากับฝากได้ดอกเบี้ยปีละ</dt>
                     <dd>{formatPercent(x.returns.guaranteed)}</dd>
                   </div>
                   <div>
-                    <dt>ออกได้ไม่ขาดทุน</dt>
+                    <dt>เลิกได้โดยไม่ขาดทุน</dt>
                     <dd>{breakevenLabel(x.breakeven, x.product.coverageYears)}</dd>
                   </div>
                   {extra && (
@@ -170,10 +177,10 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                   )}
                 </dl>
                 {x.quoteKind === 'sample' && (
-                  <span className="badge">ตัวเลขจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>
+                  <span className="badge">ตัวเลขจากตัวอย่างของบริษัท ซึ่งอายุหรือเพศต่างจากคุณ ของจริงอาจต่างไป</span>
                 )}
                 {x.breakeven.kind === 'unknown' && (
-                  <span className="badge">บริษัทไม่เปิดเผยมูลค่าเวนคืนรายปี ออกก่อนครบสัญญาไม่รู้ว่าขาดทุนเท่าไร</span>
+                  <span className="badge">บริษัทไม่บอกว่าเลิกกลางทางได้คืนเท่าไร</span>
                 )}
                 <button
                   className={picked ? 'compare-toggle on' : 'compare-toggle'}

@@ -189,3 +189,12 @@ label.inline { display: flex; align-items: center; gap: 8px; }
 .compare-table th, .compare-table td { vertical-align: top; min-width: 120px; }
 .compare-table thead th { text-align: left; }
 .compare-table tbody th { text-align: left; font-weight: 400; color: var(--muted); }
+
+.hint { font-size: 0.8rem; }
+.term { font-size: 0.8rem; color: var(--muted); margin: 0 0 4px; }
+.plain dl, .glossary dl { display: grid; gap: 12px; margin: 0; }
+.plain dt, .glossary dt { font-weight: 700; }
+.plain dd, .glossary dd { margin: 0; }
+.plain dd { font-size: 1.05rem; }
+.glossary summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.glossary[open] summary { margin-bottom: 12px; }

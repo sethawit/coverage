@@ -39,7 +39,7 @@ export function PositionChart({ positions, breakeven, stopYear }: Props) {
               </rect>
               {p.moneyOut === null ? (
                 <text x={x + slot / 2 + 1 + barW / 2} y={PAD.top + plotH - 4} textAnchor="middle" className="axis">
-                  ?<title>ปีที่ {p.year} บริษัทไม่เปิดเผยมูลค่าเวนคืน</title>
+                  ?<title>ปีที่ {p.year} บริษัทไม่บอกว่าเลิกปีนี้ได้คืนเท่าไร</title>
                 </text>
               ) : (
                 <rect
@@ -61,9 +61,9 @@ export function PositionChart({ positions, breakeven, stopYear }: Props) {
       </svg>
       <figcaption className="legend">
         <span><i className="swatch paid" /> เบี้ยที่จ่ายสะสม</span>
-        <span><i className="swatch out" /> ได้คืนถ้าออก (เงินคืนที่รับแล้ว + มูลค่าเวนคืน หรือเงินครบสัญญา)</span>
-        <span><i className="swatch zone" /> ช่วงขาดทุน</span>
-        {positions.some((p) => p.moneyOut === null) && <span>? บริษัทไม่เปิดเผยมูลค่าเวนคืนปีนั้น</span>}
+        <span><i className="swatch out" /> ได้คืนรวมถ้าเลิกปีนั้น</span>
+        <span><i className="swatch zone" /> ช่วงที่เลิกแล้วขาดทุน</span>
+        {positions.some((p) => p.moneyOut === null) && <span>? บริษัทไม่บอกว่าเลิกปีนั้นได้คืนเท่าไร</span>}
       </figcaption>
     </figure>
   );

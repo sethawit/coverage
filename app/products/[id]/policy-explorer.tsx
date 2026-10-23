@@ -7,6 +7,7 @@ import { quote } from '../../../src/domain/quote.ts';
 import { returns, TAX_BRACKETS } from '../../../src/domain/returns.ts';
 import { breakeven as findBreakeven, scenarios, yearlyPositions } from '../../../src/domain/scenarios.ts';
 import { formatBaht, formatPercent, genderLabel, UNPUBLISHED } from '../../../src/web/format.ts';
+import { GLOSSARY, plainStory } from '../../../src/web/plain.ts';
 import { parseViewState, serializeViewState, type ViewState } from '../../../src/web/profile-params.ts';
 import { NumberField } from '../../number-field.tsx';
 import { PositionChart } from './position-chart.tsx';
@@ -54,6 +55,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
           </label>
           <label>
             ทุนประกัน (บาท)
+            <span className="hint">ตัวเลขตั้งต้นที่ใช้คิดทุกอย่าง ยิ่งสูงเบี้ยยิ่งแพง</span>
             <NumberField
               value={state.sumAssured}
               min={1_000}
@@ -80,8 +82,20 @@ export function PolicyExplorer({ product }: { product: Product }) {
         )}
       </section>
 
+      <section className="panel plain">
+        <h2>สรุปแบบเข้าใจง่าย</h2>
+        <dl>
+          {plainStory(table, breakeven, r.guaranteed).map((p) => (
+            <div key={p.title}>
+              <dt>{p.title}</dt>
+              <dd>{p.text}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       <section className="panel">
-        <h2>ถ้าหยุดจ่ายเบี้ยหลังปีที่ {state.stopYear}</h2>
+        <h2>ถ้าจ่ายไป {state.stopYear} ปีแล้วไม่อยากจ่ายต่อ</h2>
         <input
           className="slider"
           type="range"
@@ -97,37 +111,40 @@ export function PolicyExplorer({ product }: { product: Product }) {
           ))}
         </div>
         <p className="muted small">
-          จ่ายไปแล้ว {formatBaht(s.surrender.totalPremiumsPaid)} คุณเลือกได้ 1 ใน 3 ทางด้านล่าง
+          จ่ายไปแล้ว {formatBaht(s.surrender.totalPremiumsPaid)} เลื่อนแถบด้านบนเพื่อเปลี่ยนปี ทางเลือกที่มีคือ
         </p>
 
         <div className="cards">
           <article className="card">
-            <h3>เวนคืน รับเงินสดทันที</h3>
+            <h3>เลิกเลย รับเงินก้อนคืน</h3>
+            <p className="term">ศัพท์บริษัท: เวนคืนกรมธรรม์</p>
             {s.surrender.kind === 'available' ? (
               <>
                 <p className="big">{formatBaht(s.surrender.cash)}</p>
                 <p className={s.surrender.net < 0 ? 'loss' : 'gain'}>
                   {s.surrender.net < 0 ? 'ขาดทุน' : 'กำไร'} {formatBaht(Math.abs(s.surrender.net))}
                 </p>
-                <p className="muted small">รวมเงินคืนรายปีที่ได้รับไปแล้ว เทียบกับเบี้ยที่จ่าย ความคุ้มครองสิ้นสุด</p>
+                <p className="muted small">นับรวมเงินคืนที่ได้ระหว่างทางแล้ว เทียบกับเบี้ยที่จ่ายไป หลังเลิก ไม่คุ้มครองชีวิตอีก</p>
               </>
             ) : (
-              <Unavailable what="มูลค่าเวนคืน" />
+              <Unavailable what="เงินที่ได้ถ้าเลิก" />
             )}
           </article>
           <article className="card">
-            <h3>ใช้เงินสำเร็จ</h3>
+            <h3>หยุดจ่าย แต่ยังคุ้มครองต่อด้วยทุนที่ลดลง</h3>
+            <p className="term">ศัพท์บริษัท: ใช้เงินสำเร็จ</p>
             {s.paidUp.kind === 'available' ? (
               <>
                 <p className="big">{formatBaht(s.paidUp.sumAssured)}</p>
-                <p className="muted small">ทุนประกันใหม่ที่ลดลง คุ้มครองต่อจนครบสัญญาโดยไม่ต้องจ่ายเบี้ยอีก</p>
+                <p className="muted small">ทุนใหม่หลังลด คุ้มครองต่อจนครบสัญญาโดยไม่ต้องจ่ายอีก</p>
               </>
             ) : (
-              <Unavailable what="ทุนประกันที่ลดลง" />
+              <Unavailable what="ทุนที่เหลือถ้าหยุดจ่าย" />
             )}
           </article>
           <article className="card">
-            <h3>ขยายระยะเวลา</h3>
+            <h3>หยุดจ่าย คุ้มครองเต็มทุนแต่สั้นลง</h3>
+            <p className="term">ศัพท์บริษัท: ขยายระยะเวลา</p>
             {s.extendedTerm.kind === 'available' ? (
               <>
                 <p className="big">
@@ -140,47 +157,49 @@ export function PolicyExplorer({ product }: { product: Product }) {
                 </p>
               </>
             ) : (
-              <Unavailable what="ระยะเวลาคุ้มครองที่ขยายได้" />
+              <Unavailable what="ระยะเวลาที่ยังคุ้มครองได้" />
             )}
           </article>
           <article className="card">
             <h3>ถ้าเสียชีวิตในปีที่ {state.stopYear}</h3>
+            <p className="term">ครอบครัวได้</p>
             <p className="big">{formatBaht(s.death.payout)}</p>
-            <p className="muted small">กรณียังจ่ายเบี้ยครบถึงปีนั้น หลังหยุดจ่าย ความคุ้มครองขึ้นกับทางที่เลือกด้านบน</p>
+            <p className="muted small">กรณียังจ่ายเบี้ยอยู่ ถ้าหยุดจ่ายแล้ว เงินส่วนนี้ขึ้นกับทางที่เลือก</p>
           </article>
         </div>
       </section>
 
       <section className="panel">
-        <h2>เงินที่จ่าย เทียบกับเงินที่ได้ถ้าออกตอนสิ้นปี</h2>
+        <h2>ถ้าเลิกแต่ละปี ได้คืนเท่าไรเทียบกับที่จ่ายไป</h2>
         <p className="muted small">
           {breakeven.kind === 'never'
-            ? 'แบบนี้ไม่คืนทุนตามตัวเลขที่รับประกัน'
+            ? 'เลิกปีไหนก็ได้คืนน้อยกว่าที่จ่าย'
             : breakeven.kind === 'unknown'
-              ? `บริษัทไม่เปิดเผยมูลค่าเวนคืนรายปีในเอกสารสาธารณะ จึงไม่รู้ว่าออกก่อนครบสัญญาแล้วขาดทุนเท่าไร${
-                  breakeven.byYear === null ? '' : ` คืนทุนอย่างช้าปีที่ ${breakeven.byYear}`
-                } ขอตารางมูลค่าเวนคืนจากบริษัทก่อนตัดสินใจ`
+              ? `บริษัทไม่บอกในหน้าเว็บว่าเลิกแต่ละปีได้คืนเท่าไร จึงไม่รู้ว่าเลิกก่อนครบสัญญาแล้วขาดทุนเท่าไร${
+                  breakeven.byYear === null ? '' : ` ได้คืนครบที่จ่ายอย่างช้าปีที่ ${breakeven.byYear}`
+                } ขอตัวเลขนี้จากตัวแทนก่อนซื้อ`
               : breakeven.year === table.coverageYears
-                ? `คืนทุนเมื่อครบสัญญาปีที่ ${breakeven.year} เท่านั้น ออกก่อนหน้านั้นขาดทุน`
-                : `คืนทุนตั้งแต่ปีที่ ${breakeven.year} ออกก่อนหน้านั้นขาดทุน`}
+                ? `ได้คืนครบที่จ่ายเมื่อถือจนครบ ${breakeven.year} ปีเท่านั้น เลิกก่อนหน้านั้นขาดทุน`
+                : `ได้คืนครบที่จ่ายตั้งแต่ปีที่ ${breakeven.year} เลิกก่อนหน้านั้นขาดทุน`}
         </p>
         <PositionChart positions={yearlyPositions(table)} breakeven={breakeven} stopYear={state.stopYear} />
       </section>
 
       <section className="panel">
-        <h2>ผลตอบแทนถ้าถือจนครบสัญญา</h2>
+        <h2>ถ้าถือจนครบ คิดเป็นดอกเบี้ยปีละเท่าไร</h2>
+        <p className="muted small">เทียบกับเอาเงินก้อนเดียวกันไปฝากที่ให้ดอกเบี้ยทบต้น ใช้เทียบกับเงินฝากหรือแบบอื่นได้</p>
         <dl className="returns">
           <div>
-            <dt>รับประกัน</dt>
+            <dt>ที่บริษัทรับประกันว่าได้แน่</dt>
             <dd className="big">{formatPercent(r.guaranteed)}</dd>
           </div>
           <div>
-            <dt>รวมเงินปันผลตามตัวอย่าง (ไม่รับประกัน)</dt>
+            <dt>ถ้าได้เงินปันผลตามตัวอย่าง (ไม่รับประกัน อาจไม่ได้)</dt>
             <dd className="dashed">{formatPercent(r.withDividends)}</dd>
           </div>
           <div>
             <dt>
-              รวมภาษีที่ประหยัดได้ ฐานภาษีของคุณ{' '}
+              รวมภาษีที่ได้คืน ถ้าคุณเสียภาษีขั้น{' '}
               <select
                 value={Math.round(state.bracket * 100)}
                 onChange={(e) =>
@@ -199,12 +218,12 @@ export function PolicyExplorer({ product }: { product: Product }) {
             <dd>
               {r.afterTax.kind === 'eligible'
                 ? formatPercent(r.afterTax.irr)
-                : 'ไม่เข้าเงื่อนไขลดหย่อนภาษี (คุ้มครองน้อยกว่า 10 ปี)'}
+                : 'ลดหย่อนภาษีไม่ได้ (สัญญาสั้นกว่า 10 ปี)'}
             </dd>
           </div>
         </dl>
         <p className="muted small">
-          ลดหย่อนภาษีเบี้ยประกันชีวิตได้สูงสุด 100,000 บาทต่อปี รวมทุกกรมธรรม์ ถ้าเวนคืนก่อนครบสัญญาอาจต้องคืนภาษีที่ลดหย่อนไป
+          เบี้ยประกันชีวิตลดหย่อนภาษีได้ รวมทุกกรมธรรม์ไม่เกินปีละ 100,000 บาท ถ้าเลิกก่อนครบสัญญาอาจต้องคืนภาษีที่ลดไป
         </p>
       </section>
 
@@ -219,9 +238,9 @@ export function PolicyExplorer({ product }: { product: Product }) {
                 <tr>
                   <th>ปี</th>
                   <th>เบี้ย</th>
-                  <th>เงินคืน</th>
-                  <th>มูลค่าเวนคืน</th>
-                  <th>คุ้มครองชีวิต</th>
+                  <th>ได้คืนปีนั้น</th>
+                  <th>ได้ถ้าเลิกปีนั้น</th>
+                  <th>ครอบครัวได้ถ้าเสียชีวิต</th>
                   <th>ปันผล (ไม่รับประกัน)</th>
                 </tr>
               </thead>
@@ -240,11 +259,23 @@ export function PolicyExplorer({ product }: { product: Product }) {
             </table>
             <p className="muted small">
               ครบสัญญารับ {formatBaht(table.maturityBenefit)}
-              {table.rows.some((r) => r.cashValue === null) && ` · มูลค่าเวนคืน "-" คือ${UNPUBLISHED}`}
+              {table.rows.some((r) => r.cashValue === null) && ` · "-" คือ${UNPUBLISHED}`}
             </p>
           </div>
         )}
       </section>
+
+      <details className="panel glossary">
+        <summary>ศัพท์ประกันที่ตัวแทนมักใช้ แปลเป็นภาษาง่าย ๆ</summary>
+        <dl>
+          {GLOSSARY.map((g) => (
+            <div key={g.term}>
+              <dt>{g.term}</dt>
+              <dd>{g.meaning}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </div>
   );
 }
@@ -252,7 +283,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
 function Unavailable({ what }: { what: string }) {
   return (
     <p className="muted small">
-      เอกสารสาธารณะของแบบนี้ไม่ระบุ{what} ดูได้ในตารางแนบท้ายกรมธรรม์ หรือสอบถามบริษัทประกัน
+      หน้าเว็บของบริษัทไม่บอก{what} ขอตัวเลขจากตัวแทน หรือดูตารางท้ายกรมธรรม์
     </p>
   );
 }

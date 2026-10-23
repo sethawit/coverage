@@ -11,27 +11,27 @@ import { NetChart } from './net-chart.tsx';
 type Row = { label: string; value: (x: Summary) => string; note?: string };
 
 const ROWS: Row[] = [
-  { label: 'จ่ายเบี้ย / คุ้มครอง', value: (x) => `${x.product.paymentYears} / ${x.product.coverageYears} ปี` },
-  { label: 'ทุนประกันที่ได้', value: (x) => formatBaht(x.sumAssured) },
-  { label: 'เบี้ยรวม', value: (x) => formatBaht(x.totalPremiums) },
-  { label: 'ได้คืนรวม (รับประกัน)', value: (x) => formatBaht(x.guaranteedTotal) },
-  { label: 'กำไรรับประกัน', value: (x) => formatBaht(x.guaranteedTotal - x.totalPremiums) },
-  { label: 'ผลตอบแทนรับประกัน', value: (x) => formatPercent(x.returns.guaranteed) },
+  { label: 'จ่ายกี่ปี / ได้คืนครบในกี่ปี', value: (x) => `${x.product.paymentYears} / ${x.product.coverageYears} ปี` },
+  { label: 'ทุนประกันที่ได้ (ตัวเลขตั้งต้น)', value: (x) => formatBaht(x.sumAssured) },
+  { label: 'จ่ายรวม', value: (x) => formatBaht(x.totalPremiums) },
+  { label: 'ได้คืนรวมแน่นอน', value: (x) => formatBaht(x.guaranteedTotal) },
+  { label: 'กำไรที่ได้แน่นอน', value: (x) => formatBaht(x.guaranteedTotal - x.totalPremiums) },
+  { label: 'เท่ากับฝากได้ดอกเบี้ยปีละ', value: (x) => formatPercent(x.returns.guaranteed) },
   {
-    label: 'รวมเงินปันผลตามตัวอย่าง',
-    note: 'ไม่รับประกัน',
+    label: 'ถ้าได้เงินปันผลตามตัวอย่าง',
+    note: 'ไม่รับประกัน อาจไม่ได้',
     value: (x) => formatPercent(x.returns.withDividends),
   },
   {
-    label: 'รวมภาษีที่ประหยัดได้',
+    label: 'รวมภาษีที่ได้คืน',
     value: (x) => (x.returns.afterTax.kind === 'eligible' ? formatPercent(x.returns.afterTax.irr) : 'ไม่เข้าเงื่อนไข'),
   },
   {
-    label: 'ออกได้ไม่ขาดทุน',
+    label: 'เลิกได้โดยไม่ขาดทุน',
     value: (x) => breakevenLabel(x.breakeven, x.product.coverageYears),
   },
   {
-    label: 'ถ้าออกหลังปีที่ 1',
+    label: 'ถ้าเลิกหลังจ่ายปีแรก',
     value: (x) => {
       const first = x.positions[0];
       if (!first) return '-';
@@ -40,7 +40,7 @@ const ROWS: Row[] = [
       return `${net < 0 ? 'ขาดทุน' : 'กำไร'} ${formatBaht(Math.abs(net))}`;
     },
   },
-  { label: 'คุ้มครองชีวิตสูงสุด', value: (x) => formatBaht(x.peakDeath) },
+  { label: 'ครอบครัวได้สูงสุดถ้าเสียชีวิต', value: (x) => formatBaht(x.peakDeath) },
   { label: 'ที่มาของตัวเลข', value: (x) => (x.quoteKind === 'exact' ? 'ตรงอายุและเพศคุณ' : 'ตัวอย่างของบริษัท') },
 ];
 
@@ -54,7 +54,7 @@ export function CompareView({ products, insurers }: { products: Product[]; insur
   return (
     <div className="explorer">
       <p className="lead">
-        {genderLabel[shopper.gender]} อายุ {shopper.age} ปี เบี้ย {formatBaht(shopper.budget)} ต่อปี ฐานภาษี{' '}
+        {genderLabel[shopper.gender]} อายุ {shopper.age} ปี เบี้ย {formatBaht(shopper.budget)} ต่อปี เสียภาษีขั้น{' '}
         {Math.round(shopper.bracket * 100)}% · <Link href={`/?${serializeShopper(shopper)}`}>แก้ไขหรือเลือกแบบอื่น</Link>
       </p>
       {picked.length < 2 ? (
@@ -64,9 +64,9 @@ export function CompareView({ products, insurers }: { products: Product[]; insur
       ) : (
         <>
           <section className="panel">
-            <h2>ถ้าออกตอนสิ้นปี ได้กำไรหรือขาดทุนเท่าไร</h2>
+            <h2>ถ้าเลิกแต่ละปี กำไรหรือขาดทุนเท่าไร</h2>
             <p className="muted small">
-              เงินที่ได้คืนทั้งหมด (เงินคืนที่รับแล้ว + มูลค่าเวนคืน หรือเงินครบสัญญา) ลบเบี้ยที่จ่ายไป
+              เงินทั้งหมดที่ได้คืนถ้าเลิกปีนั้น ลบเงินที่จ่ายไป
               ใต้เส้นศูนย์คือขาดทุน
             </p>
             <NetChart series={picked} />

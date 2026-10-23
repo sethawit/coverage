@@ -13,11 +13,11 @@ export const GOALS = {
 export type Goal = keyof typeof GOALS;
 
 export const SORTS = {
-  irr: 'ผลตอบแทนรับประกัน สูงไปต่ำ',
-  afterTax: 'ผลตอบแทนรวมภาษีที่ประหยัดได้ สูงไปต่ำ',
-  breakeven: 'คืนทุนเร็วไปช้า',
-  total: 'เงินที่ได้คืนรวม สูงไปต่ำ',
-  death: 'ความคุ้มครองชีวิตสูงสุด มากไปน้อย',
+  irr: 'ดอกเบี้ยเทียบเท่าที่ได้แน่นอน มากไปน้อย',
+  afterTax: 'ดอกเบี้ยเทียบเท่ารวมภาษีที่ได้คืน มากไปน้อย',
+  breakeven: 'เลิกได้โดยไม่ขาดทุนเร็วสุด',
+  total: 'ได้คืนรวมมากไปน้อย',
+  death: 'ครอบครัวได้มากสุดถ้าเสียชีวิต',
   payYears: 'จ่ายเบี้ยสั้นไปยาว',
 } as const;
 export type SortKey = keyof typeof SORTS;

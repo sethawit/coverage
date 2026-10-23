@@ -138,11 +138,11 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
             return (
               <li key={x.product.id} className="product-card result">
                 <span className="muted">{insurers[x.product.insurerId] ?? x.product.insurerId}</span>
-                <Link href={productHref(x, shopper)}>
-                  <strong>{x.product.nameTh}</strong>
+                <Link className="product-name" href={productHref(x, shopper)}>
+                  {x.product.nameTh}
                 </Link>
                 <span className="muted small">
-                  จ่ายเบี้ย {x.product.paymentYears} ปี · คุ้มครอง {x.product.coverageYears} ปี · ทุนประกัน{' '}
+                  จ่ายเบี้ย {x.product.paymentYears} ปี คุ้มครอง {x.product.coverageYears} ปี · ทุนประกัน{' '}
                   {formatBaht(x.sumAssured)}
                 </span>
                 <dl className="metrics">
@@ -160,9 +160,7 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                   </div>
                   <div>
                     <dt>ออกได้ไม่ขาดทุน</dt>
-                    <dd>
-                      {breakevenLabel(x.breakeven, x.product.coverageYears)}
-                    </dd>
+                    <dd>{breakevenLabel(x.breakeven, x.product.coverageYears)}</dd>
                   </div>
                   {extra && (
                     <div>
@@ -173,6 +171,9 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                 </dl>
                 {x.quoteKind === 'sample' && (
                   <span className="badge">ตัวเลขจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>
+                )}
+                {x.breakeven.kind === 'unknown' && (
+                  <span className="badge">บริษัทไม่เปิดเผยมูลค่าเวนคืนรายปี ออกก่อนครบสัญญาไม่รู้ว่าขาดทุนเท่าไร</span>
                 )}
                 <button
                   className={picked ? 'compare-toggle on' : 'compare-toggle'}

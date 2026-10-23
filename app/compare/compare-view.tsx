@@ -54,7 +54,7 @@ export function CompareView({ products, insurers }: { products: Product[]; insur
   return (
     <div className="explorer">
       <p className="lead">
-        {genderLabel[shopper.gender]} อายุ {shopper.age} ปี · เบี้ย {formatBaht(shopper.budget)} ต่อปี · ฐานภาษี{' '}
+        {genderLabel[shopper.gender]} อายุ {shopper.age} ปี เบี้ย {formatBaht(shopper.budget)} ต่อปี ฐานภาษี{' '}
         {Math.round(shopper.bracket * 100)}% · <Link href={`/?${serializeShopper(shopper)}`}>แก้ไขหรือเลือกแบบอื่น</Link>
       </p>
       {picked.length < 2 ? (

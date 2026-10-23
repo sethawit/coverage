@@ -66,7 +66,7 @@ export function NetChart({ series }: { series: Summary[] }) {
         <span>
           <i className="swatch zone" /> ช่วงขาดทุน
         </span>
-        <span>แกนนอน: ปีที่ออก · แตะจุดเพื่อดูตัวเลข · ปีที่ไม่มีจุดคือบริษัทไม่เปิดเผยมูลค่าเวนคืน</span>
+        <span>แกนนอนคือปีที่ออก แตะจุดเพื่อดูตัวเลข ปีที่ไม่มีจุดคือบริษัทไม่เปิดเผยมูลค่าเวนคืน</span>
       </figcaption>
     </figure>
   );

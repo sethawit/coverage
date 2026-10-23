@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { baht, type Product } from '../../../src/domain/product.ts';
 import { quote } from '../../../src/domain/quote.ts';
 import { returns, TAX_BRACKETS } from '../../../src/domain/returns.ts';
@@ -12,6 +12,7 @@ import {
   genderLabel,
 } from '../../../src/web/format.ts';
 import { parseViewState, serializeViewState, type ViewState } from '../../../src/web/profile-params.ts';
+import { NumberField } from '../../number-field.tsx';
 import { PositionChart } from './position-chart.tsx';
 
 export function PolicyExplorer({ product }: { product: Product }) {
@@ -244,30 +245,5 @@ function Unavailable({ what }: { what: string }) {
     <p className="muted small">
       เอกสารสาธารณะของแบบนี้ไม่ระบุ{what} ดูได้ในตารางแนบท้ายกรมธรรม์ หรือสอบถามบริษัทประกัน
     </p>
-  );
-}
-
-type NumberFieldProps = { value: number; min: number; max: number; onCommit: (n: number) => void };
-
-// Keeps the half-typed text locally so clearing the box doesn't snap back to the URL default mid-edit.
-function NumberField({ value, min, max, onCommit }: NumberFieldProps) {
-  const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
-  const n = Number(text);
-  const valid = /^\d+$/.test(text) && n >= min && n <= max;
-  return (
-    <input
-      type="text"
-      inputMode="numeric"
-      value={text}
-      aria-invalid={!valid}
-      onChange={(e) => {
-        const next = e.target.value.replace(/[^\d]/g, '');
-        setText(next);
-        const m = Number(next);
-        if (next !== '' && m >= min && m <= max) onCommit(m);
-      }}
-      onBlur={() => setText(String(value))}
-    />
   );
 }

@@ -11,7 +11,7 @@ export type ViewState = {
 
 type Defaults = { age: number; gender: Gender; sumAssured: number; paymentYears: number };
 
-const int = (raw: string | null, min: number, max: number): number | undefined => {
+export const int = (raw: string | null, min: number, max: number): number | undefined => {
   if (raw === null || !/^\d+$/.test(raw)) return undefined;
   const n = Number(raw);
   return n >= min && n <= max ? n : undefined;

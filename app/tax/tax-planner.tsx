@@ -8,7 +8,9 @@ import {
   House,
   ListChecks,
   PiggyBank,
+  Plus,
   Users,
+  X,
   Wallet,
   type Icon,
 } from '@phosphor-icons/react';
@@ -22,6 +24,7 @@ import {
   DEDUCTIONS,
   headroom,
   PERSONAL_ALLOWANCE,
+  planEffect,
   SECTIONS,
   taxSavedBy,
   type Deduction,
@@ -37,6 +40,7 @@ import { productHref } from '../shopper-link.ts';
 
 const MAX_MONEY = 100_000_000;
 const MAX_PEOPLE = 20;
+const MAX_PLAN = 8;
 // Deduction amounts live under a prefix so they never collide with the shopper's own URL keys.
 const key = (id: string) => `d_${id}`;
 
@@ -83,6 +87,12 @@ export function TaxPlanner({ products, insurers }: { products: Product[]; insure
     top.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, [index]);
 
+  const plan = parsePlan(params.get('plan'));
+  const setPlan = (next: readonly PlanRow[]) => {
+    if (next.length === 0) params.delete('plan');
+    else params.set('plan', next.map((r) => `${r.ref}:${r.amount}`).join(','));
+    router.replace(`${pathname}?${params}`, { scroll: false });
+  };
   const set = (k: string, n: number) => {
     if (n === 0) params.delete(k);
     else params.set(k, String(n));
@@ -131,7 +141,18 @@ export function TaxPlanner({ products, insurers }: { products: Product[]; insure
           {step.sections.map((section) => (
             <SectionStep key={section} section={section} input={input} result={result} set={set} />
           ))}
-          {step.id === 'summary' && <SummaryStep input={input} result={result} products={products} insurers={insurers} params={params} go={go} />}
+          {step.id === 'summary' && (
+            <SummaryStep
+              input={input}
+              result={result}
+              products={products}
+              insurers={insurers}
+              params={params}
+              go={go}
+              plan={plan}
+              setPlan={setPlan}
+            />
+          )}
 
           <div className="step-nav">
             {index > 0 ? (
@@ -265,9 +286,11 @@ type SummaryProps = {
   insurers: Record<string, string>;
   params: URLSearchParams;
   go: (i: number) => void;
+  plan: readonly PlanRow[];
+  setPlan: (next: readonly PlanRow[]) => void;
 };
 
-function SummaryStep({ input, result, products, insurers, params, go }: SummaryProps) {
+function SummaryStep({ input, result, products, insurers, params, go, plan, setPlan }: SummaryProps) {
   const lifeRoom = headroom(input, 'life').more;
   const shopper = {
     ...parseShopper(params),
@@ -336,6 +359,8 @@ function SummaryStep({ input, result, products, insurers, params, go }: SummaryP
         </section>
       )}
 
+      <PlanSection input={input} products={products} insurers={insurers} plan={plan} setPlan={setPlan} lifeRoom={lifeRoom} />
+
       <section className="step-panel">
         <h2>ประกันชีวิตที่ใช้สิทธิ์ลดหย่อนที่เหลือได้</h2>
         {lifeRoom === 0 ? (
@@ -375,9 +400,23 @@ function SummaryStep({ input, result, products, insurers, params, go }: SummaryP
                         <dd>{formatPercent(x.returns.afterTax.kind === 'eligible' ? x.returns.afterTax.irr : null)}</dd>
                       </div>
                     </dl>
-                    {x.quoteKind === 'sample' && (
-                      <span className="badge">ราคาจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>
-                    )}
+                    <div className="card-foot">
+                      {x.quoteKind === 'sample' && (
+                        <span className="badge">ราคาจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>
+                      )}
+                      <button
+                        type="button"
+                        className="compare-toggle"
+                        disabled={plan.length >= MAX_PLAN}
+                        onClick={() => {
+                          setPlan([...plan, { ref: productRef(x.product.id), amount: x.annualPremium }]);
+                          document.getElementById('plan')?.scrollIntoView({ block: 'start' });
+                        }}
+                      >
+                        <Plus size={14} weight="bold" aria-hidden />
+                        ลองใส่ในแผน
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -394,6 +433,175 @@ function SummaryStep({ input, result, products, insurers, params, go }: SummaryP
         </ul>
       </section>
     </>
+  );
+}
+
+// A plan row names either a catalog product (`p.<id>`) or a deduction type directly.
+type PlanRow = { ref: string; amount: number };
+const productRef = (id: string) => `p.${id}`;
+const PLAN_TYPES = DEDUCTIONS.filter((d) => d.plannable);
+
+function parsePlan(raw: string | null): PlanRow[] {
+  return (raw ?? '')
+    .split(',')
+    .slice(0, MAX_PLAN)
+    .flatMap((entry) => {
+      const [ref = '', amount = null] = entry.split(':');
+      return ref ? [{ ref, amount: int(amount, 0, MAX_MONEY) ?? 0 }] : [];
+    });
+}
+
+/** The deduction a row counts toward, or null when the product cannot be deducted. */
+function planDeduction(ref: string, products: readonly Product[]): string | null {
+  if (!ref.startsWith('p.')) return PLAN_TYPES.some((d) => d.id === ref) ? ref : null;
+  const product = products.find((p) => productRef(p.id) === ref);
+  return product && product.coverageYears >= 10 ? 'life' : null;
+}
+
+type PlanProps = {
+  input: TaxInput;
+  products: Product[];
+  insurers: Record<string, string>;
+  plan: readonly PlanRow[];
+  setPlan: (next: readonly PlanRow[]) => void;
+  lifeRoom: number;
+};
+
+function PlanSection({ input, products, insurers, plan, setPlan, lifeRoom }: PlanProps) {
+  const deductions = plan.map((r) => planDeduction(r.ref, products));
+  const effect = planEffect(
+    input,
+    plan.flatMap((r, i) => (deductions[i] ? [{ deduction: deductions[i], amount: r.amount }] : [])),
+  );
+  let next = 0;
+  const outcomes = deductions.map((d) => (d ? effect.rows[next++] : null));
+  const paid = plan.reduce((sum, r) => sum + r.amount, 0);
+  const { before, after } = effect;
+  const update = (i: number, row: Partial<PlanRow>) => setPlan(plan.map((r, j) => (j === i ? { ...r, ...row } : r)));
+
+  return (
+    <section className="step-panel" id="plan">
+      <h2>ลองซื้อเพิ่ม แล้วดูว่าฐานภาษีลดเท่าไร</h2>
+      <p className="muted">
+        เลือกประกันหรือกองทุน แล้วใส่เงินที่จะจ่ายต่อปี คิดต่อจากที่กรอกไว้แล้ว ทีละรายการตามลำดับ
+        รายการที่ใช้วงเงินร่วมกันจะเห็นว่าหักได้จริงเท่าไร
+      </p>
+      {plan.length > 0 && (
+        <ol className="plan-rows">
+          {plan.map((r, i) => {
+            const outcome = outcomes[i];
+            return (
+              <li key={i}>
+                <select aria-label="รายการที่จะซื้อ" value={r.ref} onChange={(e) => update(i, { ref: e.target.value })}>
+                  <optgroup label="ประเภทลดหย่อน">
+                    {PLAN_TYPES.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="ประกันในระบบ">
+                    {products.map((p) => (
+                      <option key={p.id} value={productRef(p.id)}>
+                        {insurers[p.insurerId] ?? p.insurerId} {p.nameTh}
+                        {p.coverageYears < 10 ? ' (ลดหย่อนไม่ได้)' : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <NumberField
+                  value={r.amount}
+                  min={0}
+                  max={MAX_MONEY}
+                  suffix="บาท/ปี"
+                  onCommit={(amount) => update(i, { amount })}
+                />
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="ลบรายการนี้"
+                  onClick={() => setPlan(plan.filter((_, j) => j !== i))}
+                >
+                  <X size={16} aria-hidden />
+                </button>
+                <p className="plan-outcome">
+                  {outcome ? (
+                    <>
+                      <span>หักได้ {formatBaht(outcome.deducted)}</span>
+                      <span className="gain">ภาษีลด {formatBaht(outcome.taxSaved)}</span>
+                      {outcome.deducted < r.amount && (
+                        <span className="muted small">
+                          อีก {formatBaht(r.amount - outcome.deducted)} เกินวงเงิน ไม่ช่วยลดภาษี
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="muted">สัญญาสั้นกว่า 10 ปี เอาไปลดหย่อนไม่ได้</span>
+                  )}
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+      <button
+        type="button"
+        className="button ghost"
+        disabled={plan.length >= MAX_PLAN}
+        onClick={() => setPlan([...plan, { ref: 'life', amount: Math.max(lifeRoom, 10_000) }])}
+      >
+        <Plus size={16} aria-hidden />
+        เพิ่มรายการ
+      </button>
+      {plan.length > 0 && (
+        <dl className="ledger plan-compare">
+          <div className="head">
+            <dt />
+            <dd>ตอนนี้</dd>
+            <dd>ถ้าซื้อตามแผน</dd>
+          </div>
+          <div>
+            <dt>ลดหย่อนรวม</dt>
+            <dd>{formatBaht(before.totalAllowances)}</dd>
+            <dd>{formatBaht(after.totalAllowances)}</dd>
+          </div>
+          <div>
+            <dt>เงินได้สุทธิ (ฐานภาษี)</dt>
+            <dd>{formatBaht(before.netIncome)}</dd>
+            <dd>{formatBaht(after.netIncome)}</dd>
+          </div>
+          <div>
+            <dt>ขั้นภาษีสูงสุด</dt>
+            <dd>{Math.round(before.topRate * 100)}%</dd>
+            <dd>{Math.round(after.topRate * 100)}%</dd>
+          </div>
+          <div>
+            <dt>ภาษีทั้งปี</dt>
+            <dd>{formatBaht(before.tax)}</dd>
+            <dd>{formatBaht(after.tax)}</dd>
+          </div>
+          <div className="total">
+            <dt>ภาษีลดลงต่อปี</dt>
+            <dd />
+            <dd className="gain">{formatBaht(before.tax - after.tax)}</dd>
+          </div>
+          <div>
+            <dt>เงินที่จ่ายเพิ่มต่อปี</dt>
+            <dd />
+            <dd>{formatBaht(paid)}</dd>
+          </div>
+          <div>
+            <dt>ยื่นภาษีแล้ว</dt>
+            <dd>
+              <BalanceLine balance={before.balance} compact />
+            </dd>
+            <dd>
+              <BalanceLine balance={after.balance} compact />
+            </dd>
+          </div>
+        </dl>
+      )}
+    </section>
   );
 }
 

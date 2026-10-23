@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeTax, headroom, incomeTax, type TaxInput } from './tax.ts';
+import { computeTax, headroom, incomeTax, planEffect, type TaxInput } from './tax.ts';
 
 describe('incomeTax', () => {
   it('matches the cumulative column of the Revenue Department table', () => {
@@ -67,5 +67,23 @@ describe('headroom', () => {
     expect(headroom(person({}, 1_100_000), 'life').taxSaved).toBe(100_000 * 0.2);
     // Net 840,000 drops to 740,000, so 90,000 is saved at 20% and 10,000 at 15%.
     expect(headroom(person(), 'life').taxSaved).toBe(90_000 * 0.2 + 10_000 * 0.15);
+  });
+});
+
+describe('planEffect', () => {
+  it('credits each purchase with only the shared cap it really gets', () => {
+    const { before, after, rows } = planEffect(person({ life: 30_000 }), [
+      { deduction: 'life', amount: 50_000 },
+      { deduction: 'health', amount: 25_000 },
+    ]);
+    expect(rows[0]).toEqual({ deducted: 50_000, taxSaved: 10_000 });
+    // The second purchase pulls net income below 750,000, so part of it saves at 15% instead of 20%.
+    expect(rows[1]).toEqual({ deducted: 20_000, taxSaved: 10_000 * 0.2 + 10_000 * 0.15 });
+    expect(before.netIncome - after.netIncome).toBe(70_000);
+  });
+
+  it('leaves the result unchanged for an empty plan', () => {
+    const { before, after } = planEffect(person(), []);
+    expect(after).toEqual(before);
   });
 });

@@ -197,3 +197,23 @@ export function headroom(i: TaxInput, id: string): { more: number; taxSaved: num
 /** Tax saved by paying `extra` more into one item. */
 export const taxSavedBy = (i: TaxInput, id: string, extra: number) =>
   computeTax(i).tax - computeTax(withExtra(i, id, extra)).tax;
+
+export type PlanItem = { deduction: string; amount: number };
+
+/**
+ * Applies planned purchases one after another. Each row is credited with what it adds on top of the rows before it,
+ * so items that share a cap (life and health, the retirement group) show how much of the cap they really get.
+ */
+export function planEffect(i: TaxInput, plan: readonly PlanItem[]) {
+  const before = computeTax(i);
+  let input = i;
+  let prev = before;
+  const rows = plan.map((p) => {
+    input = withExtra(input, p.deduction, p.amount);
+    const r = computeTax(input);
+    const row = { deducted: r.totalAllowances - prev.totalAllowances, taxSaved: prev.tax - r.tax };
+    prev = r;
+    return row;
+  });
+  return { before, after: prev, rows };
+}

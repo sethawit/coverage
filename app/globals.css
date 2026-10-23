@@ -204,6 +204,8 @@ select { appearance: none; padding-right: 32px; cursor: pointer;
 .results-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .results-head h2 { margin: 0; font-size: 1.35rem; }
 .results-head select { width: auto; }
+.results-head .inline { min-width: 0; max-width: 100%; }
+.results-head .inline select { min-width: 0; flex: 1; }
 .results-note { margin: 6px 0 16px; }
 label.inline { display: flex; align-items: center; gap: 8px; }
 

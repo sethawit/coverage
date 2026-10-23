@@ -55,7 +55,7 @@ export function PositionChart({ positions, breakeven, stopYear }: Props) {
                   <title>ปีที่ {p.year} ได้คืน {formatBaht(p.moneyOut)}</title>
                 </rect>
               )}
-              {(slot >= 28 || p.year % 2 === 1 || p.year === breakevenYear) && (
+              {(slot >= 28 || p.year === breakevenYear || (p.year % 2 === 1 && (breakevenYear === null || Math.abs(p.year - breakevenYear) > 1))) && (
                 <text x={x + slot / 2} y={H - 8} textAnchor="middle" className="axis">
                   {p.year === breakevenYear ? `${p.year} ✓` : p.year}
                 </text>

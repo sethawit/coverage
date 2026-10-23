@@ -184,3 +184,14 @@ describe.each([
     expect(quote(product, { age: maxAge + 1, gender: 'F', sumAssured: baht(100_000) }).kind).toBe('sample');
   });
 });
+
+// Figures printed on page 2 of the Ocean Life First Love 18/10 brochure PDF.
+it.each([
+  { age: 20, gender: 'M' as const, premium: 12_814 },
+  { age: 40, gender: 'F' as const, premium: 12_800 },
+])('First Love 18/10 quotes the brochure rate exactly for age $age $gender', ({ age, gender, premium }) => {
+  const product = ProductSchema.parse(load('ocean-first-love-18-10.json'));
+  const q = quote(product, { age, gender, sumAssured: baht(100_000) });
+  expect(q.kind).toBe('exact');
+  expect(q.table.annualPremium).toBeCloseTo(premium, 6);
+});

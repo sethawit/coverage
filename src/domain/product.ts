@@ -23,7 +23,8 @@ export const IllustrationRowSchema = z.object({
   deathBenefit: PerThousandSchema,
   guaranteedCashBack: PerThousandSchema,
   illustratedDividend: PerThousandSchema,
-  cashValue: PerThousandSchema,
+  /** null when the public document does not print surrender values. */
+  cashValue: PerThousandSchema.nullable(),
   paidUpSumAssured: PerThousandSchema.optional(),
   extendedTerm: ExtendedTermSchema.optional(),
 });
@@ -34,6 +35,8 @@ export const IllustrationSchema = z
     age: z.int().min(0).max(120),
     gender: GenderSchema,
     basis: z.enum(['contractTable', 'brochureSample']),
+    /** Set when the source states one rate for every age in the range and both genders. */
+    sameForAges: z.object({ min: z.int().min(0), max: z.int().max(120) }).optional(),
     annualPremium: PerThousandSchema,
     maturityBenefit: PerThousandSchema,
     rows: z.array(IllustrationRowSchema),
@@ -41,6 +44,10 @@ export const IllustrationSchema = z
   .refine((ill) => ill.rows.every((row, i) => row.year === i + 1), {
     message: 'policy years must be contiguous from 1',
     path: ['rows'],
+  })
+  .refine((ill) => !ill.sameForAges || (ill.sameForAges.min <= ill.age && ill.age <= ill.sameForAges.max), {
+    message: 'age must fall inside sameForAges',
+    path: ['sameForAges'],
   });
 export type Illustration = z.infer<typeof IllustrationSchema>;
 

@@ -3,7 +3,9 @@ import type { QuotedRow, QuotedTable } from './quote.ts';
 
 export type Scenarios = {
   death: { payout: Baht };
-  surrender: { cash: Baht; totalPremiumsPaid: Baht; net: Baht };
+  surrender:
+    | { kind: 'available'; cash: Baht; totalPremiumsPaid: Baht; net: Baht }
+    | { kind: 'unpublished'; totalPremiumsPaid: Baht };
   paidUp: { kind: 'available'; sumAssured: Baht } | { kind: 'unavailable' };
   extendedTerm:
     | { kind: 'available'; years: number; days: number; maturityAmount: Baht }
@@ -19,11 +21,15 @@ export function scenarios(table: QuotedTable, stopYear: number): Scenarios {
   const cashBack = cashBackThrough(table, stopYear);
   return {
     death: { payout: row.deathBenefit },
-    surrender: {
-      cash: row.cashValue,
-      totalPremiumsPaid: baht(totalPremiumsPaid),
-      net: baht(row.cashValue + cashBack - totalPremiumsPaid),
-    },
+    surrender:
+      row.cashValue === null
+        ? { kind: 'unpublished', totalPremiumsPaid: baht(totalPremiumsPaid) }
+        : {
+            kind: 'available',
+            cash: row.cashValue,
+            totalPremiumsPaid: baht(totalPremiumsPaid),
+            net: baht(row.cashValue + cashBack - totalPremiumsPaid),
+          },
     paidUp:
       row.paidUpSumAssured === undefined
         ? { kind: 'unavailable' }
@@ -34,7 +40,8 @@ export function scenarios(table: QuotedTable, stopYear: number): Scenarios {
   };
 }
 
-export type YearPosition = { year: number; premiumsPaid: Baht; moneyOut: Baht };
+/** moneyOut is null for a year whose surrender value the source does not publish. */
+export type YearPosition = { year: number; premiumsPaid: Baht; moneyOut: Baht | null };
 
 /** Per policy year: premiums paid so far vs. everything the holder has or gets by leaving at the end of that year. */
 export function yearlyPositions(table: QuotedTable): YearPosition[] {
@@ -44,18 +51,26 @@ export function yearlyPositions(table: QuotedTable): YearPosition[] {
     return {
       year,
       premiumsPaid: baht(premiumsPaidThrough(table, year)),
-      moneyOut: baht(cashBackThrough(table, year) + exitValue),
+      moneyOut: exitValue === null ? null : baht(cashBackThrough(table, year) + exitValue),
     };
   });
 }
 
-export function breakevenYear(table: QuotedTable): number | null {
-  return yearlyPositions(table).find((p) => p.moneyOut >= p.premiumsPaid)?.year ?? null;
-}
+/**
+ * The first year leaving recovers every premium. When an earlier year's surrender value is unpublished,
+ * the true year is unknown; `byYear` is the latest it can be.
+ */
+export type Breakeven =
+  | { kind: 'year'; year: number }
+  | { kind: 'never' }
+  | { kind: 'unknown'; byYear: number | null };
 
-export function lossZone(table: QuotedTable): number[] {
-  const end = breakevenYear(table) ?? table.coverageYears + 1;
-  return Array.from({ length: end - 1 }, (_, i) => i + 1);
+export function breakeven(table: QuotedTable): Breakeven {
+  const positions = yearlyPositions(table);
+  const first = positions.find((p) => p.moneyOut !== null && p.moneyOut >= p.premiumsPaid);
+  const unknownBefore = positions.some((p) => p.moneyOut === null && (!first || p.year < first.year));
+  if (unknownBefore) return { kind: 'unknown', byYear: first?.year ?? null };
+  return first ? { kind: 'year', year: first.year } : { kind: 'never' };
 }
 
 function rowAt(table: QuotedTable, year: number): QuotedRow {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { baht } from './product.ts';
 import { quote } from './quote.ts';
-import { breakevenYear, lossZone, scenarios } from './scenarios.ts';
+import { breakeven, scenarios } from './scenarios.ts';
 import { illustrationInput, product } from './test-support.ts';
 
 // Sum assured 1,000 makes Baht equal to the per-1,000 figures, so the arithmetic reads directly.
@@ -34,7 +34,7 @@ describe('scenarios', () => {
     expect(scenarios(table, 1)).toEqual({
       death: { payout: 1000 },
       // net = cash 50 + cash back 10 - premiums 100 = -40
-      surrender: { cash: 50, totalPremiumsPaid: 100, net: -40 },
+      surrender: { kind: 'available', cash: 50, totalPremiumsPaid: 100, net: -40 },
       paidUp: { kind: 'available', sumAssured: 200 },
       extendedTerm: { kind: 'available', years: 2, days: 30, maturityAmount: 0 },
     });
@@ -48,7 +48,7 @@ describe('scenarios', () => {
 
   it('counts every premium and cash back up to the stop year', () => {
     // premiums 3 x 100 = 300; cash back 10 + 10 + 10 = 30; net = 270 + 30 - 300 = 0
-    expect(scenarios(table, 3).surrender).toEqual({ cash: 270, totalPremiumsPaid: 300, net: 0 });
+    expect(scenarios(table, 3).surrender).toEqual({ kind: 'available', cash: 270, totalPremiumsPaid: 300, net: 0 });
     expect(scenarios(table, 3).death).toEqual({ payout: 1200 });
   });
 
@@ -59,29 +59,37 @@ describe('scenarios', () => {
   });
 });
 
-describe('breakevenYear and lossZone', () => {
+describe('breakeven', () => {
   it('finds the first year cash back plus cash value covers premiums', () => {
     // y1: 10+50=60 < 100; y2: 20+150=170 < 200; y3: 30+270=300 >= 300
-    expect(breakevenYear(table)).toBe(3);
-    expect(lossZone(table)).toEqual([1, 2]);
+    expect(breakeven(table)).toEqual({ kind: 'year', year: 3 });
   });
 
   it('uses the maturity benefit, not the cash value, in the final year', () => {
     // y4: cash value 100 + 0 cash back < 300, but maturity 400 >= 300
     const t = tableOf([{ cashValue: 10 }, { cashValue: 20 }, { cashValue: 30 }, { cashValue: 100 }], 400);
-    expect(breakevenYear(t)).toBe(4);
+    expect(breakeven(t)).toEqual({ kind: 'year', year: 4 });
   });
 
-  it('is null when premiums are never recovered, and every year is a loss', () => {
+  it('is never when premiums are not recovered even at maturity', () => {
     // final year: maturity 250 < premiums 300
     const t = tableOf([{ cashValue: 10 }, { cashValue: 20 }, { cashValue: 30 }, { cashValue: 40 }], 250);
-    expect(breakevenYear(t)).toBeNull();
-    expect(lossZone(t)).toEqual([1, 2, 3, 4]);
+    expect(breakeven(t)).toEqual({ kind: 'never' });
   });
 
-  it('has an empty loss zone when year 1 already breaks even', () => {
+  it('is year 1 when year 1 already breaks even', () => {
     const t = tableOf([{ cashValue: 100 }, { cashValue: 200 }, { cashValue: 300 }, { cashValue: 300 }], 300);
-    expect(breakevenYear(t)).toBe(1);
-    expect(lossZone(t)).toEqual([]);
+    expect(breakeven(t)).toEqual({ kind: 'year', year: 1 });
+  });
+
+  it('is unknown, at maturity at the latest, when earlier surrender values are unpublished', () => {
+    const t = tableOf([{ cashValue: null }, { cashValue: null }, { cashValue: null }, { cashValue: null }], 400);
+    expect(breakeven(t)).toEqual({ kind: 'unknown', byYear: 4 });
+    expect(scenarios(t, 2).surrender).toEqual({ kind: 'unpublished', totalPremiumsPaid: 200 });
+  });
+
+  it('ignores unpublished years after a known breakeven', () => {
+    const t = tableOf([{ cashValue: 100 }, { cashValue: null }, { cashValue: null }, { cashValue: null }], 400);
+    expect(breakeven(t)).toEqual({ kind: 'year', year: 1 });
   });
 });

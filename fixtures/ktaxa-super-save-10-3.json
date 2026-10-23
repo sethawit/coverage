@@ -1,0 +1,101 @@
+{
+  "id": "ktaxa-super-save-10-3",
+  "insurerId": "krungthai-axa",
+  "nameTh": "กรุงไทย ซุปเปอร์ เซฟ 10/3",
+  "kind": "endowment",
+  "paymentYears": 3,
+  "coverageYears": 10,
+  "source": {
+    "url": "https://krungthai.com/th/personal/insurance/life-insurance/saving-life/742",
+    "documentTitle": "กรุงไทย ซุปเปอร์ เซฟ 10/3 (Krungthai-AXA Life, sold by Krungthai Bank), product page coverage and premium table: premium equals sum assured, ages 20-65; surrender values not published",
+    "retrievedOn": "2026-10-23"
+  },
+  "status": {
+    "kind": "draft"
+  },
+  "illustrations": [
+    {
+      "age": 35,
+      "gender": "M",
+      "basis": "contractTable",
+      "sameForAges": {
+        "min": 20,
+        "max": 65
+      },
+      "annualPremium": 1000,
+      "maturityBenefit": 3300,
+      "rows": [
+        {
+          "year": 1,
+          "deathBenefit": 1010,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 2,
+          "deathBenefit": 2020,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 3,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 4,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 5,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 6,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 7,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 8,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 9,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 10,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 10,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        }
+      ]
+    }
+  ]
+}

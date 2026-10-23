@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { Product } from '../../src/domain/product.ts';
 import { parseShopper, serializeShopper, summarize, type Summary } from '../../src/web/discovery.ts';
-import { formatBaht, formatPercent, genderLabel } from '../../src/web/format.ts';
+import { breakevenLabel, formatBaht, formatPercent, genderLabel, UNPUBLISHED } from '../../src/web/format.ts';
 import { productHref } from '../shopper-link.ts';
 import { NetChart } from './net-chart.tsx';
 
@@ -28,18 +28,14 @@ const ROWS: Row[] = [
   },
   {
     label: 'ออกได้ไม่ขาดทุน',
-    value: (x) =>
-      x.breakeven === null
-        ? 'ไม่คืนทุน'
-        : x.breakeven === x.product.coverageYears
-          ? `ครบสัญญาปีที่ ${x.breakeven}`
-          : `ตั้งแต่ปีที่ ${x.breakeven}`,
+    value: (x) => breakevenLabel(x.breakeven, x.product.coverageYears),
   },
   {
     label: 'ถ้าออกหลังปีที่ 1',
     value: (x) => {
       const first = x.positions[0];
       if (!first) return '-';
+      if (first.moneyOut === null) return UNPUBLISHED;
       const net = first.moneyOut - first.premiumsPaid;
       return `${net < 0 ? 'ขาดทุน' : 'กำไร'} ${formatBaht(Math.abs(net))}`;
     },

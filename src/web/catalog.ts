@@ -6,6 +6,7 @@ const productsDir = join(process.cwd(), 'fixtures');
 
 export const INSURERS: Record<string, string> = {
   'bangkok-life': 'กรุงเทพประกันชีวิต',
+  'krungthai-axa': 'กรุงไทย-แอกซ่า ประกันชีวิต',
 };
 
 export function allProducts(): Product[] {

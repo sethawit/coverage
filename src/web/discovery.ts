@@ -1,7 +1,7 @@
 import { baht, type Baht, type Gender, type Product } from '../domain/product.ts';
 import { quote } from '../domain/quote.ts';
 import { cashflows, returns, TAX_BRACKETS, type Returns, type TaxBracket } from '../domain/returns.ts';
-import { breakevenYear, yearlyPositions, type YearPosition } from '../domain/scenarios.ts';
+import { breakeven, yearlyPositions, type Breakeven, type YearPosition } from '../domain/scenarios.ts';
 import { int } from './profile-params.ts';
 
 export const GOALS = {
@@ -82,7 +82,7 @@ export type Summary = {
   totalPremiums: Baht;
   guaranteedTotal: Baht;
   returns: Returns;
-  breakeven: number | null;
+  breakeven: Breakeven;
   peakDeath: Baht;
   positions: YearPosition[];
 };
@@ -103,7 +103,7 @@ export function summarize(product: Product, s: Shopper): Summary {
       cashflows(table, { kind: 'guaranteed' }).reduce((sum, f) => sum + Math.max(f.amount, 0), 0),
     ),
     returns: returns(table, s.bracket),
-    breakeven: breakevenYear(table),
+    breakeven: breakeven(table),
     peakDeath: baht(Math.max(...table.rows.map((r) => r.deathBenefit))),
     positions: yearlyPositions(table),
   };
@@ -117,10 +117,14 @@ const descending = (f: (x: Summary) => number | null) => (a: Summary, b: Summary
 const ascending = (f: (x: Summary) => number | null) => (a: Summary, b: Summary) =>
   (f(a) ?? Infinity) - (f(b) ?? Infinity);
 
+// A known year first, then products whose surrender values are unpublished (by their latest possible year), then never.
+const breakevenRank = (b: Breakeven) =>
+  b.kind === 'year' ? b.year : b.kind === 'unknown' ? 1_000 + (b.byYear ?? 999) : Infinity;
+
 const COMPARATORS: Record<SortKey, (a: Summary, b: Summary) => number> = {
   irr: descending((x) => x.returns.guaranteed),
   afterTax: descending((x) => afterTaxIrr(x.returns)),
-  breakeven: ascending((x) => x.breakeven),
+  breakeven: ascending((x) => breakevenRank(x.breakeven)),
   total: descending((x) => x.guaranteedTotal),
   death: descending((x) => x.peakDeath),
   payYears: ascending((x) => x.product.paymentYears),

@@ -11,9 +11,11 @@ export function NetChart({ series }: { series: Summary[] }) {
   const lines = series.map((x) => ({
     id: x.product.id,
     name: x.product.nameTh,
-    points: x.positions.map((p) => ({ year: p.year, net: p.moneyOut - p.premiumsPaid })),
+    points: x.positions.flatMap((p) =>
+      p.moneyOut === null ? [] : [{ year: p.year, net: p.moneyOut - p.premiumsPaid }],
+    ),
   }));
-  const years = Math.max(...lines.map((l) => l.points.length));
+  const years = Math.max(...series.map((x) => x.positions.length));
   const nets = lines.flatMap((l) => l.points.map((p) => p.net));
   const lo = Math.min(0, ...nets);
   const hi = Math.max(0, ...nets);
@@ -42,7 +44,9 @@ export function NetChart({ series }: { series: Summary[] }) {
         ))}
         {lines.map((l, i) => (
           <g key={l.id} className={`series s${i + 1}`}>
-            <polyline points={l.points.map((p) => `${x(p.year)},${y(p.net)}`).join(' ')} />
+            {runs(l.points).map((run) => (
+              <polyline key={run[0]?.year} points={run.map((p) => `${x(p.year)},${y(p.net)}`).join(' ')} />
+            ))}
             {l.points.map((p) => (
               <circle key={p.year} cx={x(p.year)} cy={y(p.net)} r={4}>
                 <title>
@@ -62,8 +66,19 @@ export function NetChart({ series }: { series: Summary[] }) {
         <span>
           <i className="swatch zone" /> ช่วงขาดทุน
         </span>
-        <span>แกนนอน: ปีที่ออก · แตะจุดเพื่อดูตัวเลข</span>
+        <span>แกนนอน: ปีที่ออก · แตะจุดเพื่อดูตัวเลข · ปีที่ไม่มีจุดคือบริษัทไม่เปิดเผยมูลค่าเวนคืน</span>
       </figcaption>
     </figure>
   );
+}
+
+/** Splits points into runs of consecutive years, so a year with no published value leaves a gap in the line. */
+function runs<P extends { year: number }>(points: P[]): P[][] {
+  const out: P[][] = [];
+  for (const p of points) {
+    const last = out.at(-1);
+    if (last && last.at(-1)!.year === p.year - 1) last.push(p);
+    else out.push([p]);
+  }
+  return out;
 }

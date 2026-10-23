@@ -37,7 +37,7 @@ describe('discovery', () => {
 
   it('filters by how long the shopper will pay and when they need the money', () => {
     const ids = discover(products, shopper('pay=5&within=10')).map((x) => x.product.id).sort();
-    expect(ids).toEqual(['bla-prestige-saving-10-4', 'bla-tax-saver-10-5']);
+    expect(ids).toEqual(['bla-prestige-saving-10-4', 'bla-tax-saver-10-5', 'ktaxa-super-save-10-3']);
   });
 
   it('sorts by the chosen metric', () => {
@@ -45,7 +45,10 @@ describe('discovery', () => {
     expect(payYears).toEqual([...payYears].sort((a, b) => a - b));
     const irrs = discover(products, shopper('sort=irr')).map((x) => x.returns.guaranteed ?? -1);
     expect(irrs).toEqual([...irrs].sort((a, b) => b - a));
-    const breakevens = discover(products, shopper('sort=breakeven')).map((x) => x.breakeven ?? 99);
-    expect(breakevens).toEqual([...breakevens].sort((a, b) => a - b));
+    const kinds = discover(products, shopper('sort=breakeven')).map((x) => x.breakeven);
+    const years = kinds.flatMap((b) => (b.kind === 'year' ? [b.year] : []));
+    expect(years).toEqual([...years].sort((a, b) => a - b));
+    // Products with published surrender values come before those without.
+    expect(kinds.map((b) => b.kind).join(',')).toMatch(/^(year,)*(unknown,?)*(never,?)*$/);
   });
 });

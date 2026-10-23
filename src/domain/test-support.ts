@@ -4,7 +4,7 @@ type RowInput = {
   deathBenefit?: number;
   guaranteedCashBack?: number;
   illustratedDividend?: number;
-  cashValue?: number;
+  cashValue?: number | null;
   paidUpSumAssured?: number;
   extendedTerm?: { years: number; days: number; maturityAmount: number };
 };

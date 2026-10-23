@@ -1,0 +1,129 @@
+{
+  "id": "ktaxa-life-super-save-14-5",
+  "insurerId": "krungthai-axa",
+  "nameTh": "Life Super Save 14/5",
+  "kind": "endowment",
+  "paymentYears": 5,
+  "coverageYears": 14,
+  "source": {
+    "url": "https://krungthai.com/th/personal/insurance/life-insurance/saving-life/558",
+    "documentTitle": "Life Super Save 14/5 (Krungthai-AXA Life, sold by Krungthai Bank), product page coverage and premium table: 1,000 baht per 1,000 sum assured, ages 20-60; surrender values not published",
+    "retrievedOn": "2026-10-23"
+  },
+  "status": {
+    "kind": "draft"
+  },
+  "illustrations": [
+    {
+      "age": 35,
+      "gender": "M",
+      "basis": "contractTable",
+      "sameForAges": {
+        "min": 20,
+        "max": 60
+      },
+      "annualPremium": 1000,
+      "maturityBenefit": 5480,
+      "rows": [
+        {
+          "year": 1,
+          "deathBenefit": 1010,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 2,
+          "deathBenefit": 2020,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 3,
+          "deathBenefit": 3150,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 4,
+          "deathBenefit": 4200,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 5,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 6,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 7,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 8,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 9,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 10,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 11,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 100,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 12,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 100,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 13,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 100,
+          "illustratedDividend": 0,
+          "cashValue": null
+        },
+        {
+          "year": 14,
+          "deathBenefit": 5250,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": null
+        }
+      ]
+    }
+  ]
+}

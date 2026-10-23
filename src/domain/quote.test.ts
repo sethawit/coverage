@@ -57,7 +57,7 @@ describe('quote', () => {
     full.rows.forEach((row, i) => {
       const h = half.rows[i]!;
       expect(row.deathBenefit).toBe(h.deathBenefit * 2);
-      expect(row.cashValue).toBe(h.cashValue * 2);
+      expect(row.cashValue).toBe(h.cashValue! * 2);
       expect(row.guaranteedCashBack).toBe(h.guaranteedCashBack * 2);
     });
   });

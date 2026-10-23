@@ -5,12 +5,8 @@ import { useState } from 'react';
 import { baht, type Product } from '../../../src/domain/product.ts';
 import { quote } from '../../../src/domain/quote.ts';
 import { returns, TAX_BRACKETS } from '../../../src/domain/returns.ts';
-import { breakevenYear, scenarios, yearlyPositions } from '../../../src/domain/scenarios.ts';
-import {
-  formatBaht,
-  formatPercent,
-  genderLabel,
-} from '../../../src/web/format.ts';
+import { breakeven as findBreakeven, scenarios, yearlyPositions } from '../../../src/domain/scenarios.ts';
+import { formatBaht, formatPercent, genderLabel, UNPUBLISHED } from '../../../src/web/format.ts';
 import { parseViewState, serializeViewState, type ViewState } from '../../../src/web/profile-params.ts';
 import { NumberField } from '../../number-field.tsx';
 import { PositionChart } from './position-chart.tsx';
@@ -34,7 +30,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
   const q = quote(product, state);
   const { table } = q;
   const s = scenarios(table, state.stopYear);
-  const breakeven = breakevenYear(table);
+  const breakeven = findBreakeven(table);
   const r = returns(table, state.bracket);
 
   return (
@@ -107,11 +103,17 @@ export function PolicyExplorer({ product }: { product: Product }) {
         <div className="cards">
           <article className="card">
             <h3>เวนคืน รับเงินสดทันที</h3>
-            <p className="big">{formatBaht(s.surrender.cash)}</p>
-            <p className={s.surrender.net < 0 ? 'loss' : 'gain'}>
-              {s.surrender.net < 0 ? 'ขาดทุน' : 'กำไร'} {formatBaht(Math.abs(s.surrender.net))}
-            </p>
-            <p className="muted small">รวมเงินคืนรายปีที่ได้รับไปแล้ว เทียบกับเบี้ยที่จ่าย ความคุ้มครองสิ้นสุด</p>
+            {s.surrender.kind === 'available' ? (
+              <>
+                <p className="big">{formatBaht(s.surrender.cash)}</p>
+                <p className={s.surrender.net < 0 ? 'loss' : 'gain'}>
+                  {s.surrender.net < 0 ? 'ขาดทุน' : 'กำไร'} {formatBaht(Math.abs(s.surrender.net))}
+                </p>
+                <p className="muted small">รวมเงินคืนรายปีที่ได้รับไปแล้ว เทียบกับเบี้ยที่จ่าย ความคุ้มครองสิ้นสุด</p>
+              </>
+            ) : (
+              <Unavailable what="มูลค่าเวนคืน" />
+            )}
           </article>
           <article className="card">
             <h3>ใช้เงินสำเร็จ</h3>
@@ -152,11 +154,15 @@ export function PolicyExplorer({ product }: { product: Product }) {
       <section className="panel">
         <h2>เงินที่จ่าย เทียบกับเงินที่ได้ถ้าออกตอนสิ้นปี</h2>
         <p className="muted small">
-          {breakeven === null
+          {breakeven.kind === 'never'
             ? 'แบบนี้ไม่คืนทุนตามตัวเลขที่รับประกัน'
-            : breakeven === table.coverageYears
-              ? `คืนทุนเมื่อครบสัญญาปีที่ ${breakeven} เท่านั้น ออกก่อนหน้านั้นขาดทุน`
-              : `คืนทุนตั้งแต่ปีที่ ${breakeven} ออกก่อนหน้านั้นขาดทุน`}
+            : breakeven.kind === 'unknown'
+              ? `บริษัทไม่เปิดเผยมูลค่าเวนคืนรายปีในเอกสารสาธารณะ จึงไม่รู้ว่าออกก่อนครบสัญญาแล้วขาดทุนเท่าไร${
+                  breakeven.byYear === null ? '' : ` คืนทุนอย่างช้าปีที่ ${breakeven.byYear}`
+                } ขอตารางมูลค่าเวนคืนจากบริษัทก่อนตัดสินใจ`
+              : breakeven.year === table.coverageYears
+                ? `คืนทุนเมื่อครบสัญญาปีที่ ${breakeven.year} เท่านั้น ออกก่อนหน้านั้นขาดทุน`
+                : `คืนทุนตั้งแต่ปีที่ ${breakeven.year} ออกก่อนหน้านั้นขาดทุน`}
         </p>
         <PositionChart positions={yearlyPositions(table)} breakeven={breakeven} stopYear={state.stopYear} />
       </section>
@@ -225,14 +231,17 @@ export function PolicyExplorer({ product }: { product: Product }) {
                     <td>{row.year}</td>
                     <td>{row.year <= table.paymentYears ? formatBaht(table.annualPremium) : '-'}</td>
                     <td>{formatBaht(row.guaranteedCashBack)}</td>
-                    <td>{formatBaht(row.cashValue)}</td>
+                    <td>{row.cashValue === null ? '-' : formatBaht(row.cashValue)}</td>
                     <td>{formatBaht(row.deathBenefit)}</td>
                     <td>{formatBaht(row.illustratedDividend)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="muted small">ครบสัญญารับ {formatBaht(table.maturityBenefit)}</p>
+            <p className="muted small">
+              ครบสัญญารับ {formatBaht(table.maturityBenefit)}
+              {table.rows.some((r) => r.cashValue === null) && ` · มูลค่าเวนคืน "-" คือ${UNPUBLISHED}`}
+            </p>
           </div>
         )}
       </section>

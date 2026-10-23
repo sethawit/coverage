@@ -15,7 +15,7 @@ export type QuotedRow = {
   deathBenefit: Baht;
   guaranteedCashBack: Baht;
   illustratedDividend: Baht;
-  cashValue: Baht;
+  cashValue: Baht | null;
   paidUpSumAssured?: Baht;
   extendedTerm?: { years: number; days: number; maturityAmount: Baht };
 };
@@ -33,8 +33,10 @@ export type Quote =
   | { kind: 'sample'; sampleAge: number; sampleGender: Gender; table: QuotedTable };
 
 export function quote(product: Product, profile: Profile): Quote {
-  const exact = product.illustrations.find(
-    (ill) => ill.age === profile.age && ill.gender === profile.gender,
+  const exact = product.illustrations.find((ill) =>
+    ill.sameForAges
+      ? ill.sameForAges.min <= profile.age && profile.age <= ill.sameForAges.max
+      : ill.age === profile.age && ill.gender === profile.gender,
   );
   if (exact) return { kind: 'exact', table: scale(product, exact, profile.sumAssured) };
 
@@ -66,7 +68,7 @@ function scaleRow(row: IllustrationRow, toBaht: (a: PerThousand) => Baht): Quote
     deathBenefit: toBaht(row.deathBenefit),
     guaranteedCashBack: toBaht(row.guaranteedCashBack),
     illustratedDividend: toBaht(row.illustratedDividend),
-    cashValue: toBaht(row.cashValue),
+    cashValue: row.cashValue === null ? null : toBaht(row.cashValue),
     ...(row.paidUpSumAssured !== undefined && { paidUpSumAssured: toBaht(row.paidUpSumAssured) }),
     ...(row.extendedTerm && {
       extendedTerm: {

@@ -16,7 +16,7 @@ import {
   type SortKey,
   type Summary,
 } from '../src/web/discovery.ts';
-import { formatBaht, formatPercent } from '../src/web/format.ts';
+import { breakevenLabel, formatBaht, formatPercent } from '../src/web/format.ts';
 import { NumberField } from './number-field.tsx';
 import { productHref } from './shopper-link.ts';
 
@@ -161,11 +161,7 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                   <div>
                     <dt>ออกได้ไม่ขาดทุน</dt>
                     <dd>
-                      {x.breakeven === null
-                        ? 'ไม่คืนทุน'
-                        : x.breakeven === x.product.coverageYears
-                          ? `เมื่อครบสัญญาปีที่ ${x.breakeven}`
-                          : `ตั้งแต่ปีที่ ${x.breakeven}`}
+                      {breakevenLabel(x.breakeven, x.product.coverageYears)}
                     </dd>
                   </div>
                   {extra && (

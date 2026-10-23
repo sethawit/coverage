@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { baht, ProductSchema, type Product } from './product.ts';
 import { quote } from './quote.ts';
 import { cashflows, returns } from './returns.ts';
-import { breakevenYear, lossZone, scenarios } from './scenarios.ts';
+import { breakeven, scenarios } from './scenarios.ts';
 
 const fixturesDir = new URL('../../fixtures/', import.meta.url);
 const load = (file: string): unknown => JSON.parse(readFileSync(new URL(file, fixturesDir), 'utf8'));
@@ -34,9 +34,13 @@ describe('Bangkok Life Tax Saver 10/5 brochure example', () => {
 
   it('surrendering after year 5 returns cash value 365,000; with cash back so far, 382,000', () => {
     const { surrender, death } = scenarios(table, 5);
-    expect(surrender.cash).toBeCloseTo(365_000, 6);
     // brochure "รวมเงินขอคืนตามสิทธิ์" 382,000 minus 466,500 premiums
-    expect(surrender.net).toBeCloseTo(382_000 - 466_500, 6);
+    expect(surrender).toEqual({
+      kind: 'available',
+      cash: expect.closeTo(365_000, 6),
+      totalPremiumsPaid: expect.closeTo(466_500, 6),
+      net: expect.closeTo(382_000 - 466_500, 6),
+    });
     expect(death.payout).toBeCloseTo(500_000, 6);
   });
 
@@ -60,8 +64,7 @@ describe('Bangkok Life Tax Saver 10/5 brochure example', () => {
   });
 
   it('breaks even only at maturity: year 9 holds 36,000 + 358,900 = 394,900 < 466,500', () => {
-    expect(breakevenYear(table)).toBe(10);
-    expect(lossZone(table)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(breakeven(table)).toEqual({ kind: 'year', year: 10 });
   });
 
   // The page states no IRR. These come from an independent Python bisection over the same printed cashflows.
@@ -102,9 +105,12 @@ describe.each(pageExamples)('$file page example', (ex) => {
 
   it('surrender after the last premium matches the printed row', () => {
     const s = scenarios(q.table, ex.stop);
-    expect(s.surrender.totalPremiumsPaid).toBeCloseTo(ex.premiums, 6);
-    expect(s.surrender.cash).toBeCloseTo(ex.cash, 6);
-    expect(s.surrender.net).toBeCloseTo(ex.withdrawable - ex.premiums, 6);
+    expect(s.surrender).toEqual({
+      kind: 'available',
+      cash: expect.closeTo(ex.cash, 6),
+      totalPremiumsPaid: expect.closeTo(ex.premiums, 6),
+      net: expect.closeTo(ex.withdrawable - ex.premiums, 6),
+    });
     expect(s.death.payout).toBeCloseTo(ex.death, 6);
   });
 
@@ -117,4 +123,39 @@ describe.each(pageExamples)('$file page example', (ex) => {
     const refunds = cashflows(q.table, { kind: 'afterTax', bracket: 0.2 }).filter((f) => f.kind === 'taxRefund');
     expect(sum(refunds)).toBeCloseTo(ex.taxRefunds, 6);
   });
+});
+
+// Figures stated on https://krungthai.com/th/personal/insurance/life-insurance/saving-life/742 and /558.
+// Premium equals sum assured at every age in range; the pages print no surrender values.
+describe.each([
+  { file: 'ktaxa-super-save-10-3.json', totalPercent: 339, maxAge: 65, peakDeathPercent: 315 },
+  { file: 'ktaxa-life-super-save-14-5.json', totalPercent: 608, maxAge: 60, peakDeathPercent: 525 },
+])('$file product page', (ex) => {
+  const product = ProductSchema.parse(load(ex.file));
+  const at = (age: number) => quote(product, { age, gender: 'F', sumAssured: baht(100_000) });
+  const { table } = at(ex.maxAge);
+
+  it('is exact at any eligible age and either gender, a sample outside the range', () => {
+    expect(at(20).kind).toBe('exact');
+    expect(at(ex.maxAge).kind).toBe('exact');
+    expect(at(ex.maxAge + 1).kind).toBe('sample');
+    expect(table.annualPremium).toBeCloseTo(100_000, 6);
+  });
+
+  it('total benefits match the page percentage of sum assured', () => {
+    const inflows = cashflows(table, { kind: 'guaranteed' }).filter((f) => f.amount > 0);
+    expect(inflows.reduce((s, f) => s + f.amount, 0)).toBeCloseTo(ex.totalPercent * 1_000, 6);
+    expect(Math.max(...table.rows.map((r) => r.deathBenefit))).toBeCloseTo(ex.peakDeathPercent * 1_000, 6);
+  });
+
+  it('marks surrender as unpublished and breakeven as maturity at the latest', () => {
+    expect(scenarios(table, product.paymentYears).surrender.kind).toBe('unpublished');
+    expect(breakeven(table)).toEqual({ kind: 'unknown', byYear: product.coverageYears });
+  });
+});
+
+it('Super Save 10/3 guaranteed IRR matches the page’s "IRR ประมาณ 1.39%"', () => {
+  const product = ProductSchema.parse(load('ktaxa-super-save-10-3.json'));
+  const { table } = quote(product, { age: 35, gender: 'M', sumAssured: baht(100_000) });
+  expect(returns(table, 0).guaranteed).toBeCloseTo(0.0139, 4);
 });

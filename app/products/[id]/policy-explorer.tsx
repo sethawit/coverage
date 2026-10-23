@@ -124,7 +124,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
         </p>
 
         <div className="cards">
-          <article className="card">
+          <article className={s.surrender.kind === 'available' ? 'card' : 'card empty'}>
             <h3>เลิกเลย รับเงินก้อนคืน</h3>
             <p className="term">ศัพท์บริษัท: เวนคืนกรมธรรม์</p>
             {s.surrender.kind === 'available' ? (
@@ -139,7 +139,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
               <Unavailable what="เงินที่ได้ถ้าเลิก" />
             )}
           </article>
-          <article className="card">
+          <article className={s.paidUp.kind === 'available' ? 'card' : 'card empty'}>
             <h3>หยุดจ่าย แต่ยังคุ้มครองต่อด้วยทุนที่ลดลง</h3>
             <p className="term">ศัพท์บริษัท: ใช้เงินสำเร็จ</p>
             {s.paidUp.kind === 'available' ? (
@@ -151,7 +151,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
               <Unavailable what="ทุนที่เหลือถ้าหยุดจ่าย" />
             )}
           </article>
-          <article className="card">
+          <article className={s.extendedTerm.kind === 'available' ? 'card' : 'card empty'}>
             <h3>หยุดจ่าย คุ้มครองเต็มทุนแต่สั้นลง</h3>
             <p className="term">ศัพท์บริษัท: ขยายระยะเวลา</p>
             {s.extendedTerm.kind === 'available' ? (

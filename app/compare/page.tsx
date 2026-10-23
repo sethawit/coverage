@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { allProducts, INSURERS } from '../../src/web/catalog.ts';
 import { CompareView } from './compare-view.tsx';
+import { PageSkeleton } from '../page-skeleton.tsx';
 
 export const metadata: Metadata = { title: 'เปรียบเทียบ | Coverage' };
 
@@ -12,7 +13,7 @@ export default function ComparePage() {
         <p className="eyebrow">วางคู่กัน ดูทีละเรื่อง</p>
         <h1>เปรียบเทียบ</h1>
       </header>
-      <Suspense>
+      <Suspense fallback={<PageSkeleton aside={false} />}>
         <CompareView products={allProducts()} insurers={INSURERS} />
       </Suspense>
       <footer className="source">

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { allProducts, INSURERS, productById } from '../../../src/web/catalog.ts';
 import { PolicyExplorer } from './policy-explorer.tsx';
+import { PageSkeleton } from '../../page-skeleton.tsx';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -34,7 +35,7 @@ export default async function ProductPage({ params }: Props) {
           จ่ายเบี้ย {product.paymentYears} ปี · คุ้มครอง {product.coverageYears} ปี
         </p>
       </header>
-      <Suspense>
+      <Suspense fallback={<PageSkeleton />}>
         <PolicyExplorer product={product} />
       </Suspense>
       <footer className="source">

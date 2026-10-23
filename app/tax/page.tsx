@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { allProducts, INSURERS } from '../../src/web/catalog.ts';
 import { TaxPlanner } from './tax-planner.tsx';
+import { PageSkeleton } from '../page-skeleton.tsx';
 
 export const metadata: Metadata = { title: 'วางแผนภาษี · Coverage' };
 
@@ -15,7 +16,7 @@ export default function TaxPage() {
           กรอกทีละขั้น ใช้เวลาไม่กี่นาที แต่ละช่องบอกเพดานสูงสุดและหักได้จริงเท่าไร ด้านข้างบอกทันทีว่าจะได้ภาษีคืนหรือต้องจ่ายเพิ่ม
         </p>
       </header>
-      <Suspense>
+      <Suspense fallback={<PageSkeleton aside={false} />}>
         <TaxPlanner products={allProducts()} insurers={INSURERS} />
       </Suspense>
       <p className="source">

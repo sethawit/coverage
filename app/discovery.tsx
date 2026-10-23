@@ -148,8 +148,8 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                       {x.product.nameTh}
                     </Link>
                     <span className="muted small">
-                      จ่าย {x.product.paymentYears} ปี ได้คืนครบใน {x.product.coverageYears} ปี · ทุนประกัน{' '}
-                      {formatBaht(x.sumAssured)}
+                      จ่ายปีละ {formatBaht(x.annualPremium)} นาน {x.product.paymentYears} ปี · ได้คืนครบใน{' '}
+                      {x.product.coverageYears} ปี · ทุนประกัน {formatBaht(x.sumAssured)}
                     </span>
                   </div>
                   <div className="card-rate">
@@ -157,15 +157,6 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                     <span className="rate-label">เท่ากับฝากได้ดอกเบี้ย (แน่นอน)</span>
                   </div>
                 </div>
-                <p className="card-line">
-                  จ่ายปีละ {formatBaht(x.annualPremium)} รวม {formatBaht(x.totalPremiums)} ได้คืนแน่นอนรวม{' '}
-                  {formatBaht(x.guaranteedTotal)}{' '}
-                  {x.guaranteedTotal >= x.totalPremiums ? (
-                    <span className="gain">มากกว่าที่จ่าย {formatBaht(x.guaranteedTotal - x.totalPremiums)}</span>
-                  ) : (
-                    <span className="loss">น้อยกว่าที่จ่าย {formatBaht(x.totalPremiums - x.guaranteedTotal)}</span>
-                  )}
-                </p>
                 <dl className="metrics">
                   <div>
                     <dt>จ่ายรวม</dt>
@@ -174,6 +165,10 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                   <div>
                     <dt>ได้คืนรวมแน่นอน</dt>
                     <dd>{formatBaht(x.guaranteedTotal)}</dd>
+                    <dd className={x.guaranteedTotal >= x.totalPremiums ? 'gain small' : 'loss small'}>
+                      {x.guaranteedTotal >= x.totalPremiums ? '+' : '-'}
+                      {formatBaht(Math.abs(x.guaranteedTotal - x.totalPremiums))}
+                    </dd>
                   </div>
                   <div>
                     <dt>เลิกได้โดยไม่ขาดทุน</dt>

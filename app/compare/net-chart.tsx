@@ -1,13 +1,16 @@
+'use client';
+
 import type { Summary } from '../../src/web/discovery.ts';
 import { formatBaht } from '../../src/web/format.ts';
+import { useWidth } from '../use-width.ts';
 
-const W = 640;
-const H = 280;
 const PAD = { top: 16, right: 16, bottom: 28, left: 64 };
 const compact = new Intl.NumberFormat('th-TH', { notation: 'compact', maximumFractionDigits: 1 });
 
 /** One line per product: money out minus premiums paid, by the policy year you leave at. */
 export function NetChart({ series }: { series: Summary[] }) {
+  const [ref, W] = useWidth<HTMLElement>(640);
+  const H = W < 560 ? 220 : 280;
   const lines = series.map((x) => ({
     id: x.product.id,
     name: x.product.nameTh,
@@ -26,7 +29,7 @@ export function NetChart({ series }: { series: Summary[] }) {
   const ticks = [lo, lo / 2, 0, hi / 2, hi].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
-    <figure className="chart">
+    <figure className="chart" ref={ref}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="กำไรหรือขาดทุนถ้าออกตอนสิ้นแต่ละปี">
         <rect x={PAD.left} y={y(0)} width={plotW} height={y(lo) - y(0)} className="loss-zone" />
         {ticks.map((v) => (
@@ -37,11 +40,13 @@ export function NetChart({ series }: { series: Summary[] }) {
             </text>
           </g>
         ))}
-        {Array.from({ length: years }, (_, i) => (
-          <text key={i} x={x(i + 1)} y={H - 8} textAnchor="middle" className="axis">
-            {i + 1}
-          </text>
-        ))}
+        {Array.from({ length: years }, (_, i) =>
+          plotW / years >= 28 || i % 2 === 0 ? (
+            <text key={i} x={x(i + 1)} y={H - 8} textAnchor="middle" className="axis">
+              {i + 1}
+            </text>
+          ) : null,
+        )}
         {lines.map((l, i) => (
           <g key={l.id} className={`series s${i + 1}`}>
             {runs(l.points).map((run) => (

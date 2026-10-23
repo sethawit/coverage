@@ -1,13 +1,16 @@
+'use client';
+
 import type { Breakeven, YearPosition } from '../../../src/domain/scenarios.ts';
 import { formatBaht } from '../../../src/web/format.ts';
+import { useWidth } from '../../use-width.ts';
 
-const W = 640;
-const H = 260;
 const PAD = { top: 16, right: 8, bottom: 28, left: 8 };
 
 type Props = { positions: YearPosition[]; breakeven: Breakeven; stopYear: number };
 
 export function PositionChart({ positions, breakeven, stopYear }: Props) {
+  const [ref, W] = useWidth<HTMLElement>(640);
+  const H = W < 560 ? 200 : 260;
   const max = Math.max(...positions.flatMap((p) => [p.premiumsPaid, p.moneyOut ?? 0]));
   const breakevenYear = breakeven.kind === 'year' ? breakeven.year : null;
   const slot = (W - PAD.left - PAD.right) / positions.length;
@@ -16,7 +19,7 @@ export function PositionChart({ positions, breakeven, stopYear }: Props) {
   const y = (v: number) => PAD.top + plotH * (1 - v / max);
 
   return (
-    <figure className="chart">
+    <figure className="chart" ref={ref}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="เบี้ยที่จ่ายสะสม เทียบกับเงินที่ได้ถ้าออกตอนสิ้นปี">
         {positions.map((p, i) => {
           const x = PAD.left + i * slot;
@@ -52,9 +55,11 @@ export function PositionChart({ positions, breakeven, stopYear }: Props) {
                   <title>ปีที่ {p.year} ได้คืน {formatBaht(p.moneyOut)}</title>
                 </rect>
               )}
-              <text x={x + slot / 2} y={H - 8} textAnchor="middle" className="axis">
-                {p.year === breakevenYear ? `${p.year} ✓` : p.year}
-              </text>
+              {(slot >= 28 || p.year % 2 === 1 || p.year === breakevenYear) && (
+                <text x={x + slot / 2} y={H - 8} textAnchor="middle" className="axis">
+                  {p.year === breakevenYear ? `${p.year} ✓` : p.year}
+                </text>
+              )}
             </g>
           );
         })}

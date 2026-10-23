@@ -16,7 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { baht, type Product } from '../../src/domain/product.ts';
 import { TAX_BRACKETS } from '../../src/domain/returns.ts';
 import {
@@ -304,9 +304,24 @@ function SummaryStep({ input, result, products, insurers, params, go, plan, setP
     .map((d) => ({ d, room: headroom(input, d.id) }))
     .filter(({ room }) => room.more > 0 && room.taxSaved > 0);
 
+  const jumps = [
+    { id: 'sum', label: 'สรุปภาษี' },
+    ...(wins.length > 0 ? [{ id: 'wins', label: 'สิทธิ์ที่เหลือ' }] : []),
+    ...(bracketTargets(input, FILL_ORDER).length > 0 ? [{ id: 'brackets', label: 'ลงขั้นภาษี' }] : []),
+    { id: 'plan', label: 'ลองซื้อเพิ่ม' },
+    { id: 'insure', label: 'ประกันที่ใช้ได้' },
+  ];
+
   return (
     <>
-      <section className="step-panel">
+      <nav className="jump" aria-label="ในหน้านี้">
+        {jumps.map((j) => (
+          <a key={j.id} href={`#${j.id}`}>
+            {j.label}
+          </a>
+        ))}
+      </nav>
+      <section className="step-panel" id="sum">
         <h2>สรุปภาษีของคุณ</h2>
         <BalanceLine balance={result.balance} />
         <dl className="ledger">
@@ -345,7 +360,7 @@ function SummaryStep({ input, result, products, insurers, params, go, plan, setP
       </section>
 
       {wins.length > 0 && (
-        <section className="step-panel">
+        <section className="step-panel" id="wins">
           <h2>ยังลดภาษีได้อีก</h2>
           <p className="muted">สิทธิ์ที่ยังใช้ไม่เต็ม ถ้าใส่เพิ่มจนเต็มเพดาน ภาษีจะลดลงเท่านี้</p>
           <ul className="wins">
@@ -370,7 +385,7 @@ function SummaryStep({ input, result, products, insurers, params, go, plan, setP
 
       <PlanSection input={input} products={products} insurers={insurers} plan={plan} setPlan={setPlan} lifeRoom={lifeRoom} />
 
-      <section className="step-panel">
+      <section className="step-panel" id="insure">
         <h2>ประกันชีวิตที่ใช้สิทธิ์ลดหย่อนที่เหลือได้</h2>
         {lifeRoom === 0 ? (
           <p className="muted">สิทธิ์ประกันชีวิตและสุขภาพ 100,000 บาทใช้เต็มแล้ว ซื้อเพิ่มไม่ช่วยลดภาษี</p>
@@ -480,72 +495,95 @@ type BracketProps = {
 
 function BracketSection({ input, eligible, shopper, insurers, setPlan }: BracketProps) {
   const targets = bracketTargets(input, FILL_ORDER);
-  if (targets.length === 0) return null;
+  const [picked, setPicked] = useState(0);
+  const t = targets[Math.min(picked, targets.length - 1)];
+  if (!t) return null;
   const percent = (r: number) => `${Math.round(r * 100)}%`;
+  const now = computeTax(input).netIncome;
+  const paid = t.fill.reduce((sum, f) => sum + f.amount, 0);
+  const share = (v: number) => `${Math.max(0, Math.min(100, (v / now) * 100))}%`;
   return (
-    <section className="step-panel">
+    <section className="step-panel" id="brackets">
       <h2>อยากลงไปขั้นภาษีไหน</h2>
       <p className="muted">
-        ถ้าเงินได้สุทธิลดลงจนต่ำกว่าเส้นของขั้นนั้น ส่วนที่เกินจะไม่ถูกคิดภาษีอัตราเดิมอีก ตัวอย่างนี้ใส่ประกันก่อน
-        แล้วต่อด้วยกองทุน แต่ละรายการใส่จนเต็มสิทธิ์ก่อนไปรายการถัดไป เป็นแค่วิธีหนึ่ง ไม่ใช่คำแนะนำว่าเหมาะกับคุณ
+        เลือกขั้นที่อยากลงไป แล้วดูว่าต้องลดหย่อนเพิ่มเท่าไร ตัวอย่างนี้ใส่ประกันก่อน แล้วต่อด้วยกองทุน
+        เป็นแค่วิธีหนึ่ง ไม่ใช่คำแนะนำว่าเหมาะกับคุณ
       </p>
-      <ol className="brackets">
-        {targets.map((t) => {
-          const paid = t.fill.reduce((sum, f) => sum + f.amount, 0);
-          return (
-            <li key={t.rate} className={t.reachable ? undefined : 'unreachable'}>
-              <div className="bracket-head">
-                <span className="bracket-rate">ขั้น {percent(t.rate)}</span>
-                <span className="muted small">เงินได้สุทธิไม่เกิน {formatBaht(t.ceiling)}</span>
+      <div className="segments" role="tablist" aria-label="ขั้นภาษีที่อยากลงไป">
+        {targets.map((x, i) => (
+          <button
+            key={x.rate}
+            type="button"
+            role="tab"
+            aria-selected={x === t}
+            className={x.reachable ? undefined : 'unreachable'}
+            onClick={() => setPicked(i)}
+          >
+            <strong>ขั้น {percent(x.rate)}</strong>
+            <span>{x.reachable ? `ภาษีลด ${formatBaht(x.taxSaved)}` : 'สิทธิ์ไม่พอ'}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="bracket-detail" role="tabpanel">
+        <div className="meter" aria-hidden>
+          <span className="meter-keep" style={{ width: share(t.reachable ? t.ceiling : t.netIncomeAfter) }} />
+          <span className="meter-mark" style={{ left: share(t.ceiling) }} />
+        </div>
+        <div className="meter-scale small">
+          <span>
+            เงินได้สุทธิหลังลดหย่อน <strong>{formatBaht(t.reachable ? t.ceiling : t.netIncomeAfter)}</strong>
+          </span>
+          <span className="muted">ตอนนี้ {formatBaht(now)}</span>
+        </div>
+        <p>
+          ขั้น {percent(t.rate)} คือเงินได้สุทธิไม่เกิน {formatBaht(t.ceiling)} ต้องลดหย่อนเพิ่ม{' '}
+          <strong>{formatBaht(t.needed)}</strong>
+          {!t.reachable && ` แต่สิทธิ์ที่เหลือลดได้ถึงแค่ ${formatBaht(t.netIncomeAfter)} ยังไม่ถึงขั้นนี้`}
+        </p>
+        {t.fill.length > 0 && (
+          <>
+            <ul className="fill">
+              {t.fill.map((f) => (
+                <li key={f.deduction}>
+                  <span>{deductionLabel(f.deduction)}</span>
+                  <strong>{formatBaht(f.amount)}</strong>
+                  {f.deduction === 'life' && eligible.length > 0 && (
+                    <span className="muted small fill-products">
+                      แบบที่ใช้สิทธิ์นี้ได้ เช่น{' '}
+                      {eligible.map((x, i) => (
+                        <span key={x.product.id}>
+                          {i > 0 && ', '}
+                          <Link href={productHref(x, shopper)}>
+                            {insurers[x.product.insurerId] ?? x.product.insurerId} {x.product.nameTh}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="bracket-foot">
+              <span>
+                <span className="muted small">จ่ายเพิ่มรวมปีละ {formatBaht(paid)} · </span>
                 <span className="gain">ภาษีลด {formatBaht(t.taxSaved)}</span>
-              </div>
-              <p className="small">
-                ต้องลดหย่อนเพิ่ม {formatBaht(t.needed)}
-                {!t.reachable && ` สิทธิ์ที่เหลือลดได้ถึงแค่ ${formatBaht(t.netIncomeAfter)} ยังไม่ถึงขั้นนี้`}
-              </p>
-              {t.fill.length > 0 && (
-                <>
-                  <ul className="fill">
-                    {t.fill.map((f) => (
-                      <li key={f.deduction}>
-                        <span>{deductionLabel(f.deduction)}</span>
-                        <strong>{formatBaht(f.amount)}</strong>
-                        {f.deduction === 'life' && eligible.length > 0 && (
-                          <span className="muted small fill-products">
-                            แบบที่ใช้สิทธิ์นี้ได้ เช่น{' '}
-                            {eligible.map((x, i) => (
-                              <span key={x.product.id}>
-                                {i > 0 && ', '}
-                                <Link href={productHref(x, shopper)}>
-                                  {insurers[x.product.insurerId] ?? x.product.insurerId} {x.product.nameTh}
-                                </Link>
-                              </span>
-                            ))}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="bracket-foot">
-                    <span className="muted small">จ่ายเพิ่มรวมปีละ {formatBaht(paid)}</span>
-                    <button
-                      type="button"
-                      className="compare-toggle"
-                      onClick={() => {
-                        setPlan(t.fill.map((f) => ({ ref: f.deduction, amount: f.amount })));
-                        document.getElementById('plan')?.scrollIntoView({ block: 'start' });
-                      }}
-                    >
-                      <Plus size={14} weight="bold" aria-hidden />
-                      ใช้เป็นแผน
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+              </span>
+              <button
+                type="button"
+                className="compare-toggle"
+                onClick={() => {
+                  setPlan(t.fill.map((f) => ({ ref: f.deduction, amount: f.amount })));
+                  document.getElementById('plan')?.scrollIntoView({ block: 'start' });
+                }}
+              >
+                <Plus size={14} weight="bold" aria-hidden />
+                ใช้เป็นแผน
+              </button>
+            </div>
+          </>
+        )}
+      </div>
       <p className="muted small">
         เงินที่จ่ายเข้าประกันและกองทุนไม่ได้หายไป แต่ถูกล็อกไว้ตามเงื่อนไขของแต่ละแบบ เช่น RMF ขายได้เมื่ออายุ 55 ปี
       </p>

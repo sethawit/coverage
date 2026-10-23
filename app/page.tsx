@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { allProducts, INSURERS } from '../src/web/catalog.ts';
 import { Discovery } from './discovery.tsx';
+import { PageSkeleton } from './page-skeleton.tsx';
 
 export default function Home() {
   return (
@@ -35,7 +36,7 @@ export default function Home() {
           </div>
         </dl>
       </header>
-      <Suspense>
+      <Suspense fallback={<PageSkeleton />}>
         <Discovery products={allProducts()} insurers={INSURERS} />
       </Suspense>
     </>

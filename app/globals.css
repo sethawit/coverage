@@ -201,3 +201,12 @@ label.inline { display: flex; align-items: center; gap: 8px; }
 .glossary summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 .glossary[open] summary { margin-bottom: 12px; }
 .conditions { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+
+.deductions { list-style: none; padding: 0; margin: 0; display: grid; }
+.deduction { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.deduction:first-child { border-top: none; padding-top: 0; }
+.deduction > :not(.deduction-label, .deduction-used) { grid-column: 1 / -1; }
+.deduction-label { color: var(--text); font-size: 0.95rem; }
+.deduction-label input { max-width: 220px; }
+.deduction-used { align-self: end; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--gain); }
+.tax-bar p { margin: 0 0 0 auto; font-weight: 700; }

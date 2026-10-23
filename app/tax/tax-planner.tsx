@@ -4,7 +4,17 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { baht, type Product } from '../../src/domain/product.ts';
 import { TAX_BRACKETS } from '../../src/domain/returns.ts';
-import { LIFE_PREMIUM_CAP, PERSONAL_ALLOWANCE, planTax, taxSaved, type TaxInput } from '../../src/domain/tax.ts';
+import {
+  computeTax,
+  DEDUCTIONS,
+  headroom,
+  PERSONAL_ALLOWANCE,
+  SECTIONS,
+  taxSavedBy,
+  type Deduction,
+  type Section,
+  type TaxInput,
+} from '../../src/domain/tax.ts';
 import { discover, parseShopper, serializeShopper } from '../../src/web/discovery.ts';
 import { formatBaht, formatPercent, genderLabel } from '../../src/web/format.ts';
 import { int } from '../../src/web/profile-params.ts';
@@ -12,160 +22,229 @@ import { NumberField } from '../number-field.tsx';
 import { productHref } from '../shopper-link.ts';
 
 const MAX_MONEY = 100_000_000;
+const MAX_PEOPLE = 20;
+// Deduction amounts live under a prefix so they never collide with the shopper's own URL keys.
+const key = (id: string) => `d_${id}`;
 
 export function TaxPlanner({ products, insurers }: { products: Product[]; insurers: Record<string, string> }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = new URLSearchParams(useSearchParams().toString());
+  const money = (k: string, fallback = 0) => int(params.get(k), 0, MAX_MONEY) ?? fallback;
+  const monthly = money('sal', 50_000);
   const input: TaxInput = {
-    income: int(params.get('inc'), 0, MAX_MONEY) ?? 600_000,
-    otherAllowances: int(params.get('oth'), 0, MAX_MONEY) ?? 0,
-    premiumsAlready: int(params.get('have'), 0, MAX_MONEY) ?? 0,
+    salary: monthly * 12,
+    bonus: money('bonus'),
+    otherWages: money('other'),
+    withheld: money('wht'),
+    amounts: Object.fromEntries(DEDUCTIONS.map((d) => [d.id, money(key(d.id))])),
   };
-  const plan = planTax(input);
-  const buy = int(params.get('buy'), 0, MAX_MONEY) ?? plan.room;
-  const saved = taxSaved(input, buy);
-  const set = (key: string, n: number) => {
-    params.set(key, String(n));
+  const result = computeTax(input);
+  const set = (k: string, n: number) => {
+    if (n === 0) params.delete(k);
+    else params.set(k, String(n));
     router.replace(`${pathname}?${params}`, { scroll: false });
   };
 
+  const lifeRoom = headroom(input, 'life').more;
   const shopper = {
     ...parseShopper(params),
-    budget: baht(Math.max(buy, 1_000)),
-    bracket: TAX_BRACKETS.find((b) => b === plan.topRate) ?? 0,
+    budget: baht(Math.max(lifeRoom, 1_000)),
+    bracket: TAX_BRACKETS.find((b) => b === result.topRate) ?? 0,
     sort: 'afterTax' as const,
   };
-  const eligible = discover(products, shopper).filter((x) => x.product.coverageYears >= 10);
+  const eligible = lifeRoom > 0 ? discover(products, shopper).filter((x) => x.product.coverageYears >= 10) : [];
 
   return (
     <div className="explorer">
       <section className="panel">
-        <h2>รายได้และลดหย่อนของคุณ</h2>
+        <h2>เงินได้และภาษีที่ถูกหักไว้</h2>
         <div className="fields">
           <label>
-            รายได้ทั้งปี (เงินเดือน + โบนัส)
-            <NumberField value={input.income} min={0} max={MAX_MONEY} onCommit={(n) => set('inc', n)} />
+            เงินเดือนต่อเดือน
+            <NumberField value={monthly} min={0} max={MAX_MONEY} onCommit={(n) => set('sal', n)} />
           </label>
           <label>
-            ลดหย่อนอื่นที่ใช้อยู่แล้ว
-            <span className="hint">เช่น ประกันสังคม กองทุนสำรองเลี้ยงชีพ ลูก พ่อแม่</span>
-            <NumberField value={input.otherAllowances} min={0} max={MAX_MONEY} onCommit={(n) => set('oth', n)} />
+            โบนัสทั้งปี
+            <NumberField value={input.bonus} min={0} max={MAX_MONEY} onCommit={(n) => set('bonus', n)} />
           </label>
           <label>
-            เบี้ยประกันชีวิตและสุขภาพที่จ่ายอยู่แล้วต่อปี
-            <NumberField value={input.premiumsAlready} min={0} max={MAX_MONEY} onCommit={(n) => set('have', n)} />
+            ค่าจ้าง ค่านายหน้า ฟรีแลนซ์ทั้งปี
+            <span className="hint">เงินได้ 40(2)</span>
+            <NumberField value={input.otherWages} min={0} max={MAX_MONEY} onCommit={(n) => set('other', n)} />
+          </label>
+          <label>
+            ภาษีหัก ณ ที่จ่ายทั้งปี
+            <span className="hint">ดูจากใบ 50 ทวิ</span>
+            <NumberField value={input.withheld} min={0} max={MAX_MONEY} onCommit={(n) => set('wht', n)} />
           </label>
         </div>
+        <p className="premium muted">
+          เงินได้ทั้งปี {formatBaht(result.assessable)} · หักค่าใช้จ่ายอัตโนมัติ 50% ไม่เกิน 100,000 ={' '}
+          {formatBaht(result.expense)}
+        </p>
       </section>
 
+      {(Object.keys(SECTIONS) as Section[]).map((section) => (
+        <section key={section} className="panel">
+          <h2>{SECTIONS[section].title}</h2>
+          {SECTIONS[section].note && <p className="muted small">{SECTIONS[section].note}</p>}
+          <ul className="deductions">
+            {section === 'family' && (
+              <li className="deduction">
+                <span className="deduction-label">ลดหย่อนส่วนตัว</span>
+                <span className="deduction-used">{formatBaht(PERSONAL_ALLOWANCE)}</span>
+                <span className="muted small">ได้ทุกคน ไม่ต้องกรอก</span>
+              </li>
+            )}
+            {DEDUCTIONS.filter((d) => d.section === section).map((d) => (
+              <DeductionRow
+                key={d.id}
+                deduction={d}
+                value={input.amounts[d.id] ?? 0}
+                used={result.allowed[d.id] ?? 0}
+                room={d.plannable ? headroom(input, d.id) : null}
+                onCommit={(n) => set(key(d.id), n)}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+
       <section className="panel plain">
-        <h2>ภาษีของคุณตอนนี้</h2>
+        <h2>สรุปภาษีของคุณ</h2>
         <dl>
           <div>
-            <dt>เงินที่ต้องเอามาคิดภาษี</dt>
+            <dt>เงินได้สุทธิ (เอามาคิดภาษี)</dt>
             <dd>
-              {formatBaht(plan.netIncome)}
+              {formatBaht(result.netIncome)}
               <span className="muted small">
                 {' '}
-                (รายได้ หักค่าใช้จ่าย {formatBaht(plan.expenseDeduction)} หักลดหย่อนส่วนตัว{' '}
-                {formatBaht(PERSONAL_ALLOWANCE)} และลดหย่อนที่กรอกไว้)
+                = เงินได้ {formatBaht(result.assessable)} หักค่าใช้จ่าย {formatBaht(result.expense)} หักลดหย่อนรวม{' '}
+                {formatBaht(result.totalAllowances)}
               </span>
             </dd>
           </div>
           <div>
-            <dt>ภาษีที่ต้องจ่ายต่อปี</dt>
+            <dt>ภาษีทั้งปี</dt>
             <dd>
-              {formatBaht(plan.tax)} · ขั้นภาษีสูงสุดของคุณ {Math.round(plan.topRate * 100)}%
+              {formatBaht(result.tax)} · ขั้นภาษีสูงสุดของคุณ {Math.round(result.topRate * 100)}%
             </dd>
           </div>
           <div>
-            <dt>สิทธิ์ลดหย่อนประกันชีวิตที่ยังเหลือ</dt>
-            <dd>
-              {plan.room > 0
-                ? `ซื้อเพิ่มได้อีกปีละ ${formatBaht(plan.room)} (เต็มสิทธิ์ ${formatBaht(LIFE_PREMIUM_CAP)})`
-                : `ใช้สิทธิ์เต็ม ${formatBaht(LIFE_PREMIUM_CAP)} แล้ว ซื้อเพิ่มไม่ช่วยลดภาษี`}
-            </dd>
+            <dt>ถูกหัก ณ ที่จ่ายไว้แล้ว</dt>
+            <dd>{formatBaht(result.withheld)}</dd>
           </div>
         </dl>
-      </section>
-
-      <section className="panel plain">
-        <h2>ถ้าซื้อประกันชีวิตเพิ่ม</h2>
-        <label>
-          เบี้ยที่อยากจ่ายเพิ่มต่อปี
-          <NumberField value={buy} min={0} max={MAX_MONEY} onCommit={(n) => set('buy', n)} />
-        </label>
-        <p className="big">ภาษีลดลงปีละ {formatBaht(saved)}</p>
-        <p className="muted">
-          {plan.tax === 0
-            ? 'ตอนนี้คุณยังไม่ต้องเสียภาษี ซื้อประกันจึงไม่ได้ภาษีคืน'
-            : buy > 0
-              ? `เท่ากับรัฐช่วยจ่าย ${((saved / buy) * 100).toFixed(1)}% ของเบี้ยที่จ่ายเพิ่ม${
-                  buy > plan.room ? ` ส่วนที่เกิน ${formatBaht(plan.room)} ไม่ได้ลดภาษี` : ''
-                }`
-              : ''}
-        </p>
-        <dl>
-          <div>
-            <dt>เงื่อนไขที่ต้องเช็กก่อนซื้อ</dt>
-            <dd>
-              <ul className="conditions">
-                <li>สัญญาต้องยาวตั้งแต่ 10 ปีขึ้นไป และซื้อกับบริษัทประกันในไทย</li>
-                <li>ถ้ามีเงินคืนระหว่างสัญญา เงินคืนต้องไม่เกิน 20% ของเบี้ย ถามบริษัทว่าแบบนี้ลดหย่อนได้เต็มไหม</li>
-                <li>แจ้งบริษัทประกันว่าจะใช้สิทธิ์ลดหย่อน บริษัทจะส่งข้อมูลให้กรมสรรพากรเอง</li>
-                <li>เบี้ยประกันสุขภาพของตัวเอง (ไม่เกิน 25,000 บาท) นับรวมในเพดาน 100,000 บาทเดียวกัน</li>
-                <li>ถ้าเลิกก่อนครบสัญญา อาจต้องคืนภาษีที่ลดไป</li>
-              </ul>
-            </dd>
-          </div>
-        </dl>
+        <BalanceLine balance={result.balance} />
       </section>
 
       <section className="panel">
-        <h2>แบบที่ลดหย่อนได้ ที่เบี้ยประมาณปีละ {formatBaht(shopper.budget)}</h2>
-        <p className="muted small">
-          คิดราคาสำหรับ{genderLabel[shopper.gender]} อายุ {shopper.age} ปี เรียงจากดอกเบี้ยเทียบเท่า (รวมภาษีที่ได้คืน)
-          มากไปน้อย ภาษีที่ลดได้คิดจากรายได้ปีนี้ ถ้ารายได้เปลี่ยน ตัวเลขก็เปลี่ยน
-        </p>
-        <ul className="product-list">
-          {eligible.map((x) => {
-            const perYear = taxSaved(input, x.annualPremium);
-            return (
-              <li key={x.product.id} className="product-card result">
-                <span className="muted small">{insurers[x.product.insurerId] ?? x.product.insurerId}</span>
-                <Link className="product-name" href={productHref(x, shopper)}>
-                  {x.product.nameTh}
-                </Link>
-                <span>
-                  จ่ายปีละ {formatBaht(x.annualPremium)} {x.product.paymentYears} ปี ได้คืนแน่นอนรวม{' '}
-                  {formatBaht(x.guaranteedTotal)} ใน {x.product.coverageYears} ปี
-                </span>
-                <dl className="metrics">
-                  <div>
-                    <dt>ภาษีลดลงต่อปี</dt>
-                    <dd>{formatBaht(perYear)}</dd>
-                  </div>
-                  <div>
-                    <dt>ภาษีลดลงรวม {x.product.paymentYears} ปี</dt>
-                    <dd>{formatBaht(perYear * x.product.paymentYears)}</dd>
-                  </div>
-                  <div>
-                    <dt>เท่ากับฝากได้ดอกเบี้ยปีละ (รวมภาษี)</dt>
-                    <dd>
-                      {formatPercent(x.returns.afterTax.kind === 'eligible' ? x.returns.afterTax.irr : null)}
-                    </dd>
-                  </div>
-                </dl>
-                {x.quoteKind === 'sample' && <span className="badge">ราคาจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>}
-              </li>
-            );
-          })}
+        <h2>ประกันชีวิตที่ใช้สิทธิ์ลดหย่อนที่เหลือได้</h2>
+        {lifeRoom === 0 ? (
+          <p className="muted">สิทธิ์ประกันชีวิตและสุขภาพ 100,000 บาทใช้เต็มแล้ว ซื้อเพิ่มไม่ช่วยลดภาษี</p>
+        ) : (
+          <>
+            <p className="muted small">
+              สิทธิ์ยังเหลือปีละ {formatBaht(lifeRoom)} คิดราคาสำหรับ{genderLabel[shopper.gender]} อายุ {shopper.age} ปี
+              เรียงจากดอกเบี้ยเทียบเท่า (รวมภาษีที่ได้คืน) มากไปน้อย
+            </p>
+            <ul className="product-list">
+              {eligible.map((x) => {
+                const perYear = taxSavedBy(input, 'life', x.annualPremium);
+                return (
+                  <li key={x.product.id} className="product-card result">
+                    <span className="muted small">{insurers[x.product.insurerId] ?? x.product.insurerId}</span>
+                    <Link className="product-name" href={productHref(x, shopper)}>
+                      {x.product.nameTh}
+                    </Link>
+                    <span>
+                      จ่ายปีละ {formatBaht(x.annualPremium)} {x.product.paymentYears} ปี ได้คืนแน่นอนรวม{' '}
+                      {formatBaht(x.guaranteedTotal)} ใน {x.product.coverageYears} ปี
+                    </span>
+                    <dl className="metrics">
+                      <div>
+                        <dt>ภาษีลดลงต่อปี</dt>
+                        <dd>{formatBaht(perYear)}</dd>
+                      </div>
+                      <div>
+                        <dt>ภาษีลดลงรวม {x.product.paymentYears} ปี</dt>
+                        <dd>{formatBaht(perYear * x.product.paymentYears)}</dd>
+                      </div>
+                      <div>
+                        <dt>เท่ากับฝากได้ดอกเบี้ยปีละ (รวมภาษี)</dt>
+                        <dd>
+                          {formatPercent(x.returns.afterTax.kind === 'eligible' ? x.returns.afterTax.irr : null)}
+                        </dd>
+                      </div>
+                    </dl>
+                    {x.quoteKind === 'sample' && (
+                      <span className="badge">ราคาจากตัวอย่างของบริษัท อายุหรือเพศต่างจากคุณ</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="small">
+              <Link href={`/?${serializeShopper({ ...shopper, goal: 'tax' })}`}>ดูทุกแบบในหน้าค้นหา</Link>
+            </p>
+          </>
+        )}
+        <ul className="conditions muted small">
+          <li>สัญญาต้องยาวตั้งแต่ 10 ปีขึ้นไป และซื้อกับบริษัทประกันในไทย</li>
+          <li>ถ้ามีเงินคืนระหว่างสัญญา เงินคืนต้องไม่เกิน 20% ของเบี้ย</li>
+          <li>แจ้งบริษัทประกันว่าจะใช้สิทธิ์ลดหย่อน บริษัทจะส่งข้อมูลให้กรมสรรพากรเอง</li>
         </ul>
-        <p className="small">
-          <Link href={`/?${serializeShopper({ ...shopper, goal: 'tax' })}`}>ดูทุกแบบในหน้าค้นหา</Link>
-        </p>
       </section>
+
+      <div className="compare-bar tax-bar" aria-live="polite">
+        <span>
+          ภาษี {formatBaht(result.tax)} · หักไว้ {formatBaht(result.withheld)}
+        </span>
+        <BalanceLine balance={result.balance} compact />
+      </div>
     </div>
+  );
+}
+
+function BalanceLine({ balance, compact = false }: { balance: number; compact?: boolean }) {
+  const text =
+    balance > 0 ? `ได้คืน ${formatBaht(balance)}` : balance < 0 ? `ต้องจ่ายเพิ่ม ${formatBaht(-balance)}` : 'ไม่ต้องจ่ายเพิ่ม';
+  return <p className={`${compact ? '' : 'big '}${balance < 0 ? 'loss' : 'gain'}`}>{text}</p>;
+}
+
+type RowProps = {
+  deduction: Deduction;
+  value: number;
+  used: number;
+  room: { more: number; taxSaved: number } | null;
+  onCommit: (n: number) => void;
+};
+
+function DeductionRow({ deduction: d, value, used, room, onCommit }: RowProps) {
+  const people = d.unit === 'people';
+  const max = people ? (d.maxPeople ?? MAX_PEOPLE) : MAX_MONEY;
+  const cut = !people && used < value;
+  return (
+    <li className="deduction">
+      <label className="deduction-label">
+        <span>
+          {d.label}
+          {people && ' (จำนวนคน)'}
+        </span>
+        <NumberField value={value} min={0} max={max} onCommit={onCommit} />
+      </label>
+      <span className="deduction-used">{used > 0 ? `หักได้ ${formatBaht(used)}` : ''}</span>
+      <span className="muted small">
+        สูงสุด {d.capText}
+        {d.hint && ` · ${d.hint}`}
+      </span>
+      {cut && <span className="loss small">ส่วนที่เกิน {formatBaht(value - used)} ไม่ได้ลดภาษี</span>}
+      {room && room.more > 0 && room.taxSaved > 0 && (
+        <span className="gain small">
+          ใส่เพิ่มได้อีก {formatBaht(room.more)} ภาษีลดอีก {formatBaht(room.taxSaved)}
+        </span>
+      )}
+    </li>
   );
 }

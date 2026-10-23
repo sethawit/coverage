@@ -65,7 +65,7 @@ export const ProductSchema = z
       retrievedOn: IsoDate,
     }),
     status: ProductStatusSchema,
-    illustrations: z.array(IllustrationSchema).nonempty(),
+    illustrations: z.tuple([IllustrationSchema], IllustrationSchema),
   })
   .superRefine((p, ctx) => {
     if (p.paymentYears > p.coverageYears) {

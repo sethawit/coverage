@@ -72,3 +72,49 @@ describe('Bangkok Life Tax Saver 10/5 brochure example', () => {
     expect(r.afterTax).toEqual({ kind: 'eligible', irr: expect.closeTo(0.041444, 5) });
   });
 });
+
+// Figures printed in each product page's worked example (https://www.bangkoklife.com/th/products/detail/<page>).
+// "withdrawable" is the page's รวมเงินขอคืนตามสิทธิ์: cash back received so far plus surrender value.
+const pageExamples = [
+  { file: 'bla-happy-saving-15-7.json', age: 35, gender: 'M', sumAssured: 100_000, premiums: 699_300,
+    guaranteed: 825_000, withDividends: 825_000, stop: 7, cash: 501_100, withdrawable: 550_100, death: 700_000,
+    // The page prints 19,780 per year but totals 139,860, which is 7 × 19,980 (20% of 99,900); the total is used.
+    taxRefunds: 139_860 },
+  { file: 'bla-prestige-saving-12-6.json', age: 35, gender: 'F', sumAssured: 500_000, premiums: 2_874_000,
+    guaranteed: 3_430_000, withDividends: 3_430_000, stop: 6, cash: 2_107_000, withdrawable: 2_287_000,
+    death: 3_000_000, taxRefunds: 120_000 },
+  { file: 'bla-prestige-saving-10-4.json', age: 35, gender: 'M', sumAssured: 1_000_000, premiums: 3_996_000,
+    guaranteed: 4_600_000, withDividends: 4_600_000, stop: 4, cash: 2_889_000, withdrawable: 3_049_000,
+    death: 4_000_000, taxRefunds: 80_000 },
+  { file: 'bla-happy-saving-14-7.json', age: 40, gender: 'M', sumAssured: 100_000, premiums: 691_600,
+    guaranteed: 762_000, withDividends: 838_390, stop: 7, cash: 590_400, withdrawable: 608_400, death: 700_000,
+    taxRefunds: 138_320 },
+] as const;
+
+describe.each(pageExamples)('$file page example', (ex) => {
+  const product = ProductSchema.parse(load(ex.file));
+  const q = quote(product, { age: ex.age, gender: ex.gender, sumAssured: baht(ex.sumAssured) });
+  const sum = (xs: { amount: number }[]) => xs.reduce((s, f) => s + f.amount, 0);
+  const inflows = (variant: Parameters<typeof cashflows>[1]) =>
+    sum(cashflows(q.table, variant).filter((f) => f.amount > 0 && f.kind !== 'taxRefund'));
+
+  it('is exact for its own age and gender', () => expect(q.kind).toBe('exact'));
+
+  it('surrender after the last premium matches the printed row', () => {
+    const s = scenarios(q.table, ex.stop);
+    expect(s.surrender.totalPremiumsPaid).toBeCloseTo(ex.premiums, 6);
+    expect(s.surrender.cash).toBeCloseTo(ex.cash, 6);
+    expect(s.surrender.net).toBeCloseTo(ex.withdrawable - ex.premiums, 6);
+    expect(s.death.payout).toBeCloseTo(ex.death, 6);
+  });
+
+  it('benefit totals match the printed summary', () => {
+    expect(inflows({ kind: 'guaranteed' })).toBeCloseTo(ex.guaranteed, 6);
+    expect(inflows({ kind: 'withDividends' })).toBeCloseTo(ex.withDividends, 6);
+  });
+
+  it('20% bracket tax refunds match the printed total', () => {
+    const refunds = cashflows(q.table, { kind: 'afterTax', bracket: 0.2 }).filter((f) => f.kind === 'taxRefund');
+    expect(sum(refunds)).toBeCloseTo(ex.taxRefunds, 6);
+  });
+});

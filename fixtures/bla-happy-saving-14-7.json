@@ -1,0 +1,125 @@
+{
+  "id": "bla-happy-saving-14-7",
+  "insurerId": "bangkok-life",
+  "nameTh": "บีแอลเอ แฮปปี้เซฟวิ่ง 14/7 (มีเงินปันผล)",
+  "kind": "endowment",
+  "paymentYears": 7,
+  "coverageYears": 14,
+  "source": {
+    "url": "https://www.bangkoklife.com/th/products/detail/215",
+    "documentTitle": "บีแอลเอ แฮปปี้เซฟวิ่ง 14/7 (มีเงินปันผล), product page worked example: male 40, sum assured 100,000 baht; dividend from the 3% scenario",
+    "retrievedOn": "2026-10-23"
+  },
+  "status": {
+    "kind": "draft"
+  },
+  "illustrations": [
+    {
+      "age": 40,
+      "gender": "M",
+      "basis": "brochureSample",
+      "annualPremium": 988,
+      "maturityBenefit": 7000,
+      "rows": [
+        {
+          "year": 1,
+          "deathBenefit": 1000,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": 221
+        },
+        {
+          "year": 2,
+          "deathBenefit": 2000,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": 773
+        },
+        {
+          "year": 3,
+          "deathBenefit": 3000,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": 1902
+        },
+        {
+          "year": 4,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": 2905
+        },
+        {
+          "year": 5,
+          "deathBenefit": 5000,
+          "guaranteedCashBack": 20,
+          "illustratedDividend": 0,
+          "cashValue": 4098
+        },
+        {
+          "year": 6,
+          "deathBenefit": 6000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 4991
+        },
+        {
+          "year": 7,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 5904
+        },
+        {
+          "year": 8,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 6048
+        },
+        {
+          "year": 9,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 6195
+        },
+        {
+          "year": 10,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 6347
+        },
+        {
+          "year": 11,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 80,
+          "illustratedDividend": 0,
+          "cashValue": 6503
+        },
+        {
+          "year": 12,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 80,
+          "illustratedDividend": 0,
+          "cashValue": 6664
+        },
+        {
+          "year": 13,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 80,
+          "illustratedDividend": 0,
+          "cashValue": 6829
+        },
+        {
+          "year": 14,
+          "deathBenefit": 7000,
+          "guaranteedCashBack": 80,
+          "illustratedDividend": 763.9,
+          "cashValue": 7000
+        }
+      ]
+    }
+  ]
+}

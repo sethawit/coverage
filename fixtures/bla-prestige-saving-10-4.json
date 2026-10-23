@@ -1,0 +1,97 @@
+{
+  "id": "bla-prestige-saving-10-4",
+  "insurerId": "bangkok-life",
+  "nameTh": "เพรสทีจ เซฟวิ่ง 10/4",
+  "kind": "endowment",
+  "paymentYears": 4,
+  "coverageYears": 10,
+  "source": {
+    "url": "https://www.bangkoklife.com/th/products/detail/253",
+    "documentTitle": "เพรสทีจ เซฟวิ่ง 10/4, product page worked example: male 35, sum assured 1,000,000 baht",
+    "retrievedOn": "2026-10-23"
+  },
+  "status": {
+    "kind": "draft"
+  },
+  "illustrations": [
+    {
+      "age": 35,
+      "gender": "M",
+      "basis": "brochureSample",
+      "annualPremium": 999,
+      "maturityBenefit": 4240,
+      "rows": [
+        {
+          "year": 1,
+          "deathBenefit": 1000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 403
+        },
+        {
+          "year": 2,
+          "deathBenefit": 2000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 1123
+        },
+        {
+          "year": 3,
+          "deathBenefit": 3000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 1929
+        },
+        {
+          "year": 4,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2889
+        },
+        {
+          "year": 5,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2875
+        },
+        {
+          "year": 6,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2861
+        },
+        {
+          "year": 7,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2846
+        },
+        {
+          "year": 8,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2831
+        },
+        {
+          "year": 9,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 40,
+          "illustratedDividend": 0,
+          "cashValue": 2816
+        },
+        {
+          "year": 10,
+          "deathBenefit": 4000,
+          "guaranteedCashBack": 0,
+          "illustratedDividend": 0,
+          "cashValue": 2840
+        }
+      ]
+    }
+  ]
+}

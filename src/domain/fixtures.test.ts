@@ -159,3 +159,28 @@ it('Super Save 10/3 guaranteed IRR matches the page’s "IRR ประมาณ 
   const { table } = quote(product, { age: 35, gender: 'M', sumAssured: baht(100_000) });
   expect(returns(table, 0).guaranteed).toBeCloseTo(0.0139, 4);
 });
+
+// Both pages print one rate, 999 baht per 1,000 sum assured, for every age and both genders.
+describe.each([
+  { file: 'bla-happy-saving-15-7.json', maxAge: 84 },
+  { file: 'bla-prestige-saving-10-4.json', maxAge: 80 },
+])('$file flat rate table', ({ file, maxAge }) => {
+  const product = ProductSchema.parse(load(file));
+
+  it('quotes exactly for any age in range without borrowing the example’s surrender values', () => {
+    const q = quote(product, { age: maxAge, gender: 'F', sumAssured: baht(100_000) });
+    expect(q.kind).toBe('exact');
+    expect(q.table.annualPremium).toBe(99_900);
+    expect(q.table.rows.every((r) => r.cashValue === null)).toBe(true);
+  });
+
+  it('keeps the worked example, with its surrender values, for the example’s own age', () => {
+    const q = quote(product, { age: 35, gender: 'M', sumAssured: baht(100_000) });
+    expect(q.kind).toBe('exact');
+    expect(q.table.rows[0]?.cashValue).not.toBeNull();
+  });
+
+  it('falls back to the sample past the insurable age', () => {
+    expect(quote(product, { age: maxAge + 1, gender: 'F', sumAssured: baht(100_000) }).kind).toBe('sample');
+  });
+});

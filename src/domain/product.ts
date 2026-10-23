@@ -91,7 +91,8 @@ export const ProductSchema = z
           path: ['illustrations', i, 'rows'],
         });
       }
-      const key = `${ill.age}${ill.gender}`;
+      // A flat-rate table covers an age range, so it may sit beside the worked example for one age inside it.
+      const key = ill.sameForAges ? `${ill.sameForAges.min}-${ill.sameForAges.max}` : `${ill.age}${ill.gender}`;
       if (seen.has(key)) {
         ctx.addIssue({
           code: 'custom',

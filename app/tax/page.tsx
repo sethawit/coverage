@@ -8,11 +8,13 @@ export const metadata: Metadata = { title: 'วางแผนภาษี · Co
 export default function TaxPage() {
   return (
     <>
-      <h1>คำนวณและวางแผนภาษี ปี 2569</h1>
-      <p className="lead">
-        กรอกเงินได้ ภาษีที่ถูกหักไว้ และค่าลดหย่อนทีละช่อง แต่ละช่องบอกเพดานสูงสุด ว่าหักได้จริงเท่าไร และใส่เพิ่มได้อีกเท่าไร
-        ท้ายหน้าบอกว่าจะได้ภาษีคืนหรือต้องจ่ายเพิ่ม
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">ภาษีเงินได้บุคคลธรรมดา ปีภาษี 2569</p>
+        <h1>คำนวณและวางแผนภาษี</h1>
+        <p className="lead">
+          กรอกทีละขั้น ใช้เวลาไม่กี่นาที แต่ละช่องบอกเพดานสูงสุดและหักได้จริงเท่าไร ด้านข้างบอกทันทีว่าจะได้ภาษีคืนหรือต้องจ่ายเพิ่ม
+        </p>
+      </header>
       <Suspense>
         <TaxPlanner products={allProducts()} insurers={INSURERS} />
       </Suspense>

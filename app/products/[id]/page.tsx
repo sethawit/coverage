@@ -27,11 +27,13 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <p className="muted">{INSURERS[product.insurerId] ?? product.insurerId}</p>
-      <h1>{product.nameTh}</h1>
-      <p className="lead">
-        จ่ายเบี้ย {product.paymentYears} ปี · คุ้มครอง {product.coverageYears} ปี
-      </p>
+      <header className="page-head">
+        <p className="eyebrow">{INSURERS[product.insurerId] ?? product.insurerId}</p>
+        <h1>{product.nameTh}</h1>
+        <p className="lead">
+          จ่ายเบี้ย {product.paymentYears} ปี · คุ้มครอง {product.coverageYears} ปี
+        </p>
+      </header>
       <Suspense>
         <PolicyExplorer product={product} />
       </Suspense>

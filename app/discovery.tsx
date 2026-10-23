@@ -1,5 +1,6 @@
 'use client';
 
+import { Check, Plus } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { baht, type Product } from '../src/domain/product.ts';
@@ -48,9 +49,9 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
     });
 
   return (
-    <div className="explorer">
-      <section className="panel">
-        <h2>คุณอยากได้อะไรจากประกันนี้</h2>
+    <div className="discovery">
+      <section className="panel filters">
+        <h2>บอกเราเกี่ยวกับคุณ</h2>
         <Chips
           label="เป้าหมาย"
           options={[null, ...(Object.keys(GOALS) as Goal[])]}
@@ -111,7 +112,7 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
         />
       </section>
 
-      <section>
+      <section className="results">
         <div className="results-head">
           <h2>{results.length} แบบที่ตรงเงื่อนไข</h2>
           <label className="inline">
@@ -125,45 +126,54 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
             </select>
           </label>
         </div>
-        <p className="muted small">
+        <p className="muted small results-note">
           ทุกแบบคิดที่เบี้ย {formatBaht(shopper.budget)} ต่อปีเท่ากัน ลำดับเป็นไปตามตัวเลขที่คุณเลือกเรียงเท่านั้น
           ไม่ใช่คำแนะนำว่าแบบไหนเหมาะกับคุณ
         </p>
         {results.length === 0 && (
-          <p className="panel">ไม่มีแบบที่ตรงทุกเงื่อนไข ลองเปลี่ยนระยะเวลาจ่ายเบี้ยหรือระยะเวลาที่ต้องได้เงินคืน</p>
+          <div className="empty">
+            <p>ไม่มีแบบที่ตรงทุกเงื่อนไข</p>
+            <p className="muted">ลองเปลี่ยนระยะเวลาจ่ายเบี้ย หรือระยะเวลาที่ต้องได้เงินคืน ให้กว้างขึ้น</p>
+          </div>
         )}
         <ul className="product-list">
           {results.map((x) => {
             const picked = shopper.compare.includes(x.product.id);
             return (
-              <li key={x.product.id} className="product-card result">
-                <span className="muted">{insurers[x.product.insurerId] ?? x.product.insurerId}</span>
-                <Link className="product-name" href={productHref(x, shopper)}>
-                  {x.product.nameTh}
-                </Link>
-                <span className="muted small">
-                  จ่าย {x.product.paymentYears} ปี ได้คืนครบใน {x.product.coverageYears} ปี · ทุนประกัน{' '}
-                  {formatBaht(x.sumAssured)}
-                </span>
-                <span>
+              <li key={x.product.id} className={picked ? 'product-card picked' : 'product-card'}>
+                <div className="card-top">
+                  <div className="card-head">
+                    <span className="insurer">{insurers[x.product.insurerId] ?? x.product.insurerId}</span>
+                    <Link className="product-name" href={productHref(x, shopper)}>
+                      {x.product.nameTh}
+                    </Link>
+                    <span className="muted small">
+                      จ่าย {x.product.paymentYears} ปี ได้คืนครบใน {x.product.coverageYears} ปี · ทุนประกัน{' '}
+                      {formatBaht(x.sumAssured)}
+                    </span>
+                  </div>
+                  <div className="card-rate">
+                    <span className="rate-value">{formatPercent(x.returns.guaranteed)}</span>
+                    <span className="rate-label">เท่ากับฝากได้ดอกเบี้ย (แน่นอน)</span>
+                  </div>
+                </div>
+                <p className="card-line">
                   จ่ายปีละ {formatBaht(x.annualPremium)} รวม {formatBaht(x.totalPremiums)} ได้คืนแน่นอนรวม{' '}
                   {formatBaht(x.guaranteedTotal)}{' '}
-                  {x.guaranteedTotal >= x.totalPremiums
-                    ? `(มากกว่าที่จ่าย ${formatBaht(x.guaranteedTotal - x.totalPremiums)})`
-                    : `(น้อยกว่าที่จ่าย ${formatBaht(x.totalPremiums - x.guaranteedTotal)})`}
-                </span>
+                  {x.guaranteedTotal >= x.totalPremiums ? (
+                    <span className="gain">มากกว่าที่จ่าย {formatBaht(x.guaranteedTotal - x.totalPremiums)}</span>
+                  ) : (
+                    <span className="loss">น้อยกว่าที่จ่าย {formatBaht(x.totalPremiums - x.guaranteedTotal)}</span>
+                  )}
+                </p>
                 <dl className="metrics">
-                  <div>
-                    <dt>ได้คืนรวมแน่นอน</dt>
-                    <dd>{formatBaht(x.guaranteedTotal)}</dd>
-                  </div>
                   <div>
                     <dt>จ่ายรวม</dt>
                     <dd>{formatBaht(x.totalPremiums)}</dd>
                   </div>
                   <div>
-                    <dt>เท่ากับฝากได้ดอกเบี้ยปีละ</dt>
-                    <dd>{formatPercent(x.returns.guaranteed)}</dd>
+                    <dt>ได้คืนรวมแน่นอน</dt>
+                    <dd>{formatBaht(x.guaranteedTotal)}</dd>
                   </div>
                   <div>
                     <dt>เลิกได้โดยไม่ขาดทุน</dt>
@@ -176,20 +186,26 @@ export function Discovery({ products, insurers }: { products: Product[]; insurer
                     </div>
                   )}
                 </dl>
-                {x.quoteKind === 'sample' && (
-                  <span className="badge">ตัวเลขจากตัวอย่างของบริษัท ซึ่งอายุหรือเพศต่างจากคุณ ของจริงอาจต่างไป</span>
-                )}
-                {x.breakeven.kind === 'unknown' && (
-                  <span className="badge">บริษัทไม่บอกว่าเลิกกลางทางได้คืนเท่าไร</span>
-                )}
-                <button
-                  className={picked ? 'compare-toggle on' : 'compare-toggle'}
-                  aria-pressed={picked}
-                  disabled={!picked && shopper.compare.length >= MAX_COMPARE}
-                  onClick={() => toggleCompare(x.product.id)}
-                >
-                  {picked ? '✓ เลือกเปรียบเทียบแล้ว' : '+ เปรียบเทียบ'}
-                </button>
+                <div className="card-foot">
+                  <div className="badges">
+                    {x.quoteKind === 'sample' && (
+                      <span className="badge">ตัวเลขจากตัวอย่างของบริษัท ซึ่งอายุหรือเพศต่างจากคุณ ของจริงอาจต่างไป</span>
+                    )}
+                    {x.breakeven.kind === 'unknown' && (
+                      <span className="badge">บริษัทไม่บอกว่าเลิกกลางทางได้คืนเท่าไร</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className={picked ? 'compare-toggle on' : 'compare-toggle'}
+                    aria-pressed={picked}
+                    disabled={!picked && shopper.compare.length >= MAX_COMPARE}
+                    onClick={() => toggleCompare(x.product.id)}
+                  >
+                    {picked ? <Check size={16} weight="bold" aria-hidden /> : <Plus size={16} aria-hidden />}
+                    {picked ? 'เลือกแล้ว' : 'เปรียบเทียบ'}
+                  </button>
+                </div>
               </li>
             );
           })}

@@ -8,7 +8,10 @@ export const metadata: Metadata = { title: 'เปรียบเทียบ | 
 export default function ComparePage() {
   return (
     <>
-      <h1>เปรียบเทียบ</h1>
+      <header className="page-head">
+        <p className="eyebrow">วางคู่กัน ดูทีละเรื่อง</p>
+        <h1>เปรียบเทียบ</h1>
+      </header>
       <Suspense>
         <CompareView products={allProducts()} insurers={INSURERS} />
       </Suspense>

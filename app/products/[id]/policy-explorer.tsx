@@ -35,8 +35,8 @@ export function PolicyExplorer({ product }: { product: Product }) {
   const r = returns(table, state.bracket);
 
   return (
-    <div className="explorer">
-      <section className="panel profile">
+    <div className="product-layout">
+      <aside className="panel profile">
         <h2>ข้อมูลของคุณ</h2>
         <div className="fields">
           <label>
@@ -65,8 +65,11 @@ export function PolicyExplorer({ product }: { product: Product }) {
           </label>
         </div>
         <p className="premium">
-          เบี้ยประกัน <strong>{formatBaht(table.annualPremium)}</strong> ต่อปี × {table.paymentYears} ปี
-          = {formatBaht(table.annualPremium * table.paymentYears)}
+          <span className="muted small">เบี้ยประกัน</span>
+          <strong>{formatBaht(table.annualPremium)} ต่อปี</strong>
+          <span className="muted small">
+            × {table.paymentYears} ปี = {formatBaht(table.annualPremium * table.paymentYears)}
+          </span>
         </p>
         {q.kind === 'sample' && (
           <p className="notice">
@@ -80,7 +83,13 @@ export function PolicyExplorer({ product }: { product: Product }) {
             ตรงกับตารางของบริษัทสำหรับอายุและเพศของคุณ ปรับตามทุนประกันแบบสัดส่วน อาจคลาดเคลื่อนเล็กน้อยจากการปัดเศษ
           </p>
         )}
-      </section>
+        <div className="headline-rate">
+          <span className="rate-value">{formatPercent(r.guaranteed)}</span>
+          <span className="rate-label">ถ้าถือจนครบ เท่ากับฝากได้ดอกเบี้ยเท่านี้ (บริษัทรับประกัน)</span>
+        </div>
+      </aside>
+
+      <div className="explorer">
 
       <section className="panel plain">
         <h2>สรุปแบบเข้าใจง่าย</h2>
@@ -276,6 +285,7 @@ export function PolicyExplorer({ product }: { product: Product }) {
           ))}
         </dl>
       </details>
+      </div>
     </div>
   );
 }

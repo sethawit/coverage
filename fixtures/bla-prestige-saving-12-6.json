@@ -107,5 +107,11 @@
         }
       ]
     }
-  ]
+  ],
+  "accidentalDeath": {
+    "extraPercentOfSumAssured": 300,
+    "basis": "sumAssured",
+    "capBaht": 6000000,
+    "condition": "แนบสัญญาเพิ่มเติม ADB ให้โดยไม่เก็บเบี้ยสำหรับผู้ที่รับประกันในอัตรามาตรฐาน วงเงินสูงสุดนับรวมทุกกรมธรรม์"
+  }
 }

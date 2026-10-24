@@ -195,3 +195,14 @@ it.each([
   expect(q.kind).toBe('exact');
   expect(q.table.annualPremium).toBeCloseTo(premium, 6);
 });
+
+// Worked example on the Ocean Life First Love 18/10 brochure: female 35, premium 15,000, sum assured 117,739.
+it('First Love 18/10 sample reproduces the brochure death and surrender values', () => {
+  const product = ProductSchema.parse(load('ocean-first-love-18-10.json'));
+  const q = quote(product, { age: 35, gender: 'F', sumAssured: baht(117_739) });
+  expect(q.table.rows[0]?.deathBenefit).toBeCloseTo(176_726.24, 0);
+  expect(q.table.rows[9]?.deathBenefit).toBeCloseTo(178_374.59, 0);
+  expect(q.table.rows[0]?.cashValue).toBeCloseTo(706.43, 0);
+  expect(q.table.rows[17]?.cashValue).toBeCloseTo(176_608.5, 0);
+  expect(product.accidentalDeath?.extraPercentOfSumAssured).toBe(300);
+});

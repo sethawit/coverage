@@ -58,6 +58,16 @@ export const ProductStatusSchema = z.discriminatedUnion('kind', [
 ]);
 export type ProductStatus = z.infer<typeof ProductStatusSchema>;
 
+/** Extra payout on accidental death, on top of the illustrated death benefit. */
+export const AccidentalDeathSchema = z.object({
+  extraPercentOfSumAssured: z.number().positive(),
+  /** Some insurers price the free rider on its own sum assured, which the page does not tie to the base plan's. */
+  basis: z.enum(['sumAssured', 'riderSumAssured']),
+  capBaht: BahtSchema.nullable(),
+  condition: z.string().min(1),
+});
+export type AccidentalDeath = z.infer<typeof AccidentalDeathSchema>;
+
 export const ProductSchema = z
   .object({
     id: z.string().min(1),
@@ -72,6 +82,7 @@ export const ProductSchema = z
       retrievedOn: IsoDate,
     }),
     status: ProductStatusSchema,
+    accidentalDeath: AccidentalDeathSchema.optional(),
     illustrations: z.tuple([IllustrationSchema], IllustrationSchema),
   })
   .superRefine((p, ctx) => {

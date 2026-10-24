@@ -7,7 +7,7 @@
   "coverageYears": 18,
   "source": {
     "url": "https://www.ocean.co.th/en/our-products/savings/first-love1810",
-    "documentTitle": "โอเชี่ยนไลฟ์ เฟิร์ส เลิฟ 18/10 (Ocean Life, policy form โอชิ แพลน 18/10), product page benefit table: female 35, premium 6,000 a year buys sum assured 47,096; death 150% of sum assured in every year (plus 300% more for accidental death, not modelled), 150% at maturity; factsheet code 20682; surrender values not published; brochure PDF (https://www.ocean.co.th/en/our-products/savings/first-love1810/download/brochure) page 2 prints annual premium per 1,000 sum assured for ages 20, 30 and 40 by gender",
+    "documentTitle": "โอเชี่ยนไลฟ์ เฟิร์ส เลิฟ 18/10 (Ocean Life, policy form โอชิ แพลน 18/10), product page benefit table: female 35, premium 6,000 a year buys sum assured 47,096; death 150% of sum assured plus the accident part's surrender value, 300% more for accidental death, 150% at maturity; factsheet code 20682; brochure PDF (https://www.ocean.co.th/en/our-products/savings/first-love1810/download/brochure) page 2 prints annual premium per 1,000 sum assured for ages 20, 30 and 40 by gender; the same brochure's worked example (female 35, premium 15,000, sum assured 117,739) gives death benefits and surrender values for every year, used for the age-35 female table. The age 20, 30 and 40 tables keep death at 150% because the accident part's surrender value is printed only for that example",
     "retrievedOn": "2026-10-23"
   },
   "status": {
@@ -23,129 +23,129 @@
       "rows": [
         {
           "year": 1,
-          "deathBenefit": 1500,
+          "deathBenefit": 1501.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 6.0
         },
         {
           "year": 2,
-          "deathBenefit": 1500,
+          "deathBenefit": 1503.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 79.0
         },
         {
           "year": 3,
-          "deathBenefit": 1500,
+          "deathBenefit": 1504.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 213.0
         },
         {
           "year": 4,
-          "deathBenefit": 1500,
+          "deathBenefit": 1505.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 342.0
         },
         {
           "year": 5,
-          "deathBenefit": 1500,
+          "deathBenefit": 1507.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 498.0
         },
         {
           "year": 6,
-          "deathBenefit": 1500,
+          "deathBenefit": 1508.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 620.0
         },
         {
           "year": 7,
-          "deathBenefit": 1500,
+          "deathBenefit": 1509.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 747.0
         },
         {
           "year": 8,
-          "deathBenefit": 1500,
+          "deathBenefit": 1512.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 879.0
         },
         {
           "year": 9,
-          "deathBenefit": 1500,
+          "deathBenefit": 1513.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1015.0
         },
         {
           "year": 10,
-          "deathBenefit": 1500,
+          "deathBenefit": 1515.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1156.0
         },
         {
           "year": 11,
-          "deathBenefit": 1500,
+          "deathBenefit": 1513.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1194.0
         },
         {
           "year": 12,
-          "deathBenefit": 1500,
+          "deathBenefit": 1511.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1233.0
         },
         {
           "year": 13,
-          "deathBenefit": 1500,
+          "deathBenefit": 1510.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1274.0
         },
         {
           "year": 14,
-          "deathBenefit": 1500,
+          "deathBenefit": 1508.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1316.0
         },
         {
           "year": 15,
-          "deathBenefit": 1500,
+          "deathBenefit": 1506.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1359.0
         },
         {
           "year": 16,
-          "deathBenefit": 1500,
+          "deathBenefit": 1505.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1405.0
         },
         {
           "year": 17,
-          "deathBenefit": 1500,
+          "deathBenefit": 1502.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1451.0
         },
         {
           "year": 18,
-          "deathBenefit": 1500,
+          "deathBenefit": 1500.0,
           "guaranteedCashBack": 0,
           "illustratedDividend": 0,
-          "cashValue": null
+          "cashValue": 1500.0
         }
       ]
     },
@@ -959,5 +959,11 @@
         }
       ]
     }
-  ]
+  ],
+  "accidentalDeath": {
+    "extraPercentOfSumAssured": 300,
+    "basis": "sumAssured",
+    "capBaht": null,
+    "condition": "รวมอยู่ในแบบประกันหลัก"
+  }
 }

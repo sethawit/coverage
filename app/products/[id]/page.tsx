@@ -4,6 +4,8 @@ import { Suspense } from 'react';
 import { allProducts, INSURERS, productById } from '../../../src/web/catalog.ts';
 import { PolicyExplorer } from './policy-explorer.tsx';
 import { PageSkeleton } from '../../page-skeleton.tsx';
+import { formatBaht } from '../../../src/web/format.ts';
+import type { AccidentalDeath } from '../../../src/domain/product.ts';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -34,6 +36,7 @@ export default async function ProductPage({ params }: Props) {
         <p className="lead">
           จ่ายเบี้ย {product.paymentYears} ปี · คุ้มครอง {product.coverageYears} ปี
         </p>
+        {product.accidentalDeath && <p className="lead">{accidentText(product.accidentalDeath)}</p>}
       </header>
       <Suspense fallback={<PageSkeleton />}>
         <PolicyExplorer product={product} />
@@ -47,4 +50,10 @@ export default async function ProductPage({ params }: Props) {
       </footer>
     </>
   );
+}
+
+function accidentText(a: AccidentalDeath) {
+  const of = a.basis === 'sumAssured' ? 'ของทุนประกัน' : 'ของทุนสัญญาเพิ่มเติม';
+  const cap = a.capBaht === null ? '' : ` สูงสุด ${formatBaht(a.capBaht)}`;
+  return `เสียชีวิตจากอุบัติเหตุ ได้เพิ่มอีก ${a.extraPercentOfSumAssured}% ${of}${cap} (${a.condition}) ยังไม่รวมในตารางด้านล่าง`;
 }
